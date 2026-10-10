@@ -1,0 +1,21 @@
+# Môi trường và cấu hình bảo mật
+.env
+.env.backup
+config.local.php
+
+# Thư mục phụ thuộc (Dependencies)
+/vendor/
+/node_modules/
+
+# File tạm của IDE và Hệ điều hành
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+.DS_Store
+Thumbs.db
+
+# File log và cache
+*.log
+storage/logs/*
