@@ -1,21 +1,31 @@
-# Môi trường và cấu hình bảo mật
+# Environment Configuration
 .env
-.env.backup
-config.local.php
 
-# Thư mục phụ thuộc (Dependencies)
+# Dependencies
 /vendor/
-/node_modules/
 
-# File tạm của IDE và Hệ điều hành
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
+# Operating System Files
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# File log và cache
+# IDE & Editor Files
+.vscode/*
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs & Temporary files
 *.log
-storage/logs/*
+scratch/
+cloudflared.exe
+.agent/
+
+# Uploaded Files (keep folder structure)
+public/uploads/locations/*
+!public/uploads/locations/.gitkeep
+public/uploads/qrcodes/*
+!public/uploads/qrcodes/.gitkeep
+public/uploads/*.txt
+
