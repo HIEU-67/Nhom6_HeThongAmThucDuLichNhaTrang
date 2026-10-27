@@ -33,8 +33,7 @@
 5. [Cấu Hình Biến Môi Trường (.env)](#5-cấu-hình-biến-môi-trường-env)
 6. [Tài Khoản Thử Nghiệm Sẵn Có](#6-tài-khoản-thử-nghiệm-sẵn-có)
 7. [Luồng Nghiệp Vụ Chính](#7-luồng-nghiệp-vụ-chính)
-8. [Hướng Dẫn Chạy Thử Nghiệm Trên Điện Thoại & Đội Nhóm](#8-hướng-dẫn-chạy-thử-nghiệm-trên-điện-thoại--đội-nhóm)
-9. [Nguyên Tắc Kỹ Thuật Bất Di Bất Dịch](#9-nguyên-tắc-kỹ-thuật-bất-di-bất-dịch)
+
 
 ---
 
