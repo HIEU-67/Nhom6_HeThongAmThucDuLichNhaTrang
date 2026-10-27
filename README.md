@@ -13,6 +13,18 @@
 
 ---
 
+# Danh Sách Thành Viên Nhóm
+
+| STT | Họ và Tên | Mã Số Sinh Viên (MSSV) | Vai Trò / Ghi Chú |
+|:---:|:---|:---:|:---|
+| 1 | Vương Huy Hoàng | 65131148 | Nhóm trưởng |
+| 2 | Lê Hoàng Đăng Gia | 65130700 | Thành viên |
+| 3 | Hồ Văn Hiếu | 65130983 | Thành viên |
+| 4 | Bùi Gia Tiến | 65133617 | Thành viên |
+| 5 | Bùi Thị Kim Nhàn | 65132360 | Thành viên |
+
+---
+
 ## 📑 Mục Lục
 1. [Điểm Nổi Bật Của Hệ Thống](#1-điểm-nổi-bật-của-hệ-thống)
 2. [Ngăn Xếp Công Nghệ (Tech Stack)](#2-ngăn-xếp-công-nghệ-tech-stack)
@@ -262,85 +274,6 @@ flowchart TD
 ```
 
 ---
-
-## 8. Hướng Dẫn Chạy Thử Nghiệm Trên Điện Thoại & Đội Nhóm
-
-### Cách A: Cùng mạng Wi-Fi (Chạy song song 1 Máy tính - 1 Điện thoại)
-1. Trên máy tính, khởi động server mở cho toàn mạng LAN:
-   ```bash
-   php -S 0.0.0.0:8000 -t public
-   ```
-2. Mở PowerShell gõ `ipconfig` để lấy địa chỉ IPv4 của máy tính (ví dụ: `192.168.0.62`).
-3. Trên điện thoại, kết nối cùng mạng Wi-Fi và truy cập trình duyệt:
-   ```text
-   http://192.168.0.62:8000
-   ```
-4. Thực hiện kịch bản: Máy tính mở trang Admin duyệt vé, điện thoại mở trang thanh toán VietQR & xem pháo hoa tự động chuyển trang!
-
-### Cách B: Chia sẻ qua Cloudflare Tunnel (Cho cả nhóm test từ xa, hỗ trợ 4G/5G)
-1. Tải file chạy chính thức [cloudflared-windows-amd64.exe](https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe), đổi tên thành `cloudflared.exe` và đặt vào thư mục dự án.
-2. Mở Terminal và chạy lệnh:
-   ```bash
-   .\cloudflared.exe tunnel --url http://localhost:8000
-   ```
-3. Copy đường link có đuôi `https://xxx.trycloudflare.com` gửi vào nhóm. Tất cả thành viên có thể vào lướt web, chat AI và đặt vé trực tiếp.
-4. Để tắt: Nhấn **`Ctrl + C`** tại Terminal.
-
----
-
-## 9. Nguyên Tắc Kỹ Thuật Bất Di Bất Dịch
-
-1. **Atomic Update chống Overbooking:** Số lượng tồn kho vé được cập nhật bằng lệnh SQL trực tiếp:  
-   `UPDATE ton_kho_ve SET so_ve_con_lai = so_ve_con_lai - :qty WHERE id = :id AND so_ve_con_lai >= :qty`.
-2. **Database Transaction toàn vẹn:** Mọi thao tác phát sinh đơn hàng, ghi nhận thanh toán và trừ tồn kho đều được bọc trong `beginTransaction()` và `commit()`. Nếu xảy ra sự cố sẽ tự động `rollBack()`.
-3. **Giá vé tính toán tại Server:** Tuyệt đối không nhận giá tiền từ Frontend gửi lên. Cột `thanh_tien` trong bảng chi tiết đơn hàng là `STORED GENERATED COLUMN`.
-4. **Bảo toàn dữ liệu (Soft Delete):** Đơn hàng và vé không bao giờ bị xóa vật lý (`DELETE`). Hệ thống chỉ cập nhật trường `ngay_xoa` và khóa ngoại bảng giao dịch luôn ở chế độ `RESTRICT`.
-5. **Bảo mật phân quyền (Server-side RBAC):** Kiểm tra vai trò nghiêm ngặt qua `AuthMiddleware::checkAdmin()` và `AuthMiddleware::checkCustomer()`.
-6. **Bảo mật mật khẩu:** Mã hóa mật khẩu người dùng bằng thuật toán chuẩn công nghiệp `password_hash($pass, PASSWORD_BCRYPT)`.
-
----
-
-<p align="center">
-  Phát triển với ❤️ dành cho Du lịch & Ẩm thực Nha Trang Staycation • 2026
-</p>
-
-## 8. Hướng Dẫn Chạy Thử Nghiệm Trên Điện Thoại & Đội Nhóm
-
-### Cách A: Cùng mạng Wi-Fi (Chạy song song 1 Máy tính - 1 Điện thoại)
-1. Trên máy tính, khởi động server mở cho toàn mạng LAN:
-   ```bash
-   php -S 0.0.0.0:8000 -t public
-   ```
-2. Mở PowerShell gõ `ipconfig` để lấy địa chỉ IPv4 của máy tính (ví dụ: `192.168.0.62`).
-3. Trên điện thoại, kết nối cùng mạng Wi-Fi và truy cập trình duyệt:
-   ```text
-   http://192.168.0.62:8000
-   ```
-4. Thực hiện kịch bản: Máy tính mở trang Admin duyệt vé, điện thoại mở trang thanh toán VietQR & xem pháo hoa tự động chuyển trang!
-
-### Cách B: Chia sẻ qua Cloudflare Tunnel (Cho cả nhóm test từ xa, hỗ trợ 4G/5G)
-1. Tải file chạy chính thức [cloudflared-windows-amd64.exe](https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe), đổi tên thành `cloudflared.exe` và đặt vào thư mục dự án.
-2. Mở Terminal và chạy lệnh:
-   ```bash
-   .\cloudflared.exe tunnel --url http://localhost:8000
-   ```
-3. Copy đường link có đuôi `https://xxx.trycloudflare.com` gửi vào nhóm. Tất cả thành viên có thể vào lướt web, chat AI và đặt vé trực tiếp.
-4. Để tắt: Nhấn **`Ctrl + C`** tại Terminal.
-
----
-
-## 9. Nguyên Tắc Kỹ Thuật Bất Di Bất Dịch
-
-1. **Atomic Update chống Overbooking:** Số lượng tồn kho vé được cập nhật bằng lệnh SQL trực tiếp:  
-   `UPDATE ton_kho_ve SET so_ve_con_lai = so_ve_con_lai - :qty WHERE id = :id AND so_ve_con_lai >= :qty`.
-2. **Database Transaction toàn vẹn:** Mọi thao tác phát sinh đơn hàng, ghi nhận thanh toán và trừ tồn kho đều được bọc trong `beginTransaction()` và `commit()`. Nếu xảy ra sự cố sẽ tự động `rollBack()`.
-3. **Giá vé tính toán tại Server:** Tuyệt đối không nhận giá tiền từ Frontend gửi lên. Cột `thanh_tien` trong bảng chi tiết đơn hàng là `STORED GENERATED COLUMN`.
-4. **Bảo toàn dữ liệu (Soft Delete):** Đơn hàng và vé không bao giờ bị xóa vật lý (`DELETE`). Hệ thống chỉ cập nhật trường `ngay_xoa` và khóa ngoại bảng giao dịch luôn ở chế độ `RESTRICT`.
-5. **Bảo mật phân quyền (Server-side RBAC):** Kiểm tra vai trò nghiêm ngặt qua `AuthMiddleware::checkAdmin()` và `AuthMiddleware::checkCustomer()`.
-6. **Bảo mật mật khẩu:** Mã hóa mật khẩu người dùng bằng thuật toán chuẩn công nghiệp `password_hash($pass, PASSWORD_BCRYPT)`.
-
----
-
 <p align="center">
   Phát triển với ❤️ dành cho Du lịch & Ẩm thực Nha Trang Staycation • 2026
 </p>
