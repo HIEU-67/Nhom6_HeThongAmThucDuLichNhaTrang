@@ -120,11 +120,13 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
         $countExpired = 0;
         $countCancelled = 0;
         $countPending = 0;
+        $countVerifying = 0;
 
         foreach ($orders as &$ord) {
             $isCancelled = ($ord['trang_thai_don_hang'] === 'da_huy');
             $isUsed = ($ord['trang_thai_don_hang'] === 'hoan_thanh');
             $isPaid = ($ord['trang_thai_thanh_toan'] === 'da_thanh_toan' || $ord['phuong_thuc_thanh_toan'] === 'tai_quay');
+            $isWaitVerify = ($ord['trang_thai_thanh_toan'] === 'cho_xac_nhan' || $ord['trang_thai_don_hang'] === 'cho_xac_nhan');
             $vDate = !empty($ord['ngay_tham_quan']) ? date('Y-m-d', strtotime($ord['ngay_tham_quan'])) : null;
             $isExpiredDate = ($vDate !== null && $vDate < $today);
 
@@ -134,6 +136,9 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
             } elseif ($isUsed || $isExpiredDate) {
                 $ord['ticket_status'] = 'expired';
                 $countExpired++;
+            } elseif ($isWaitVerify) {
+                $ord['ticket_status'] = 'verifying';
+                $countVerifying++;
             } elseif ($isPaid) {
                 $ord['ticket_status'] = 'valid';
                 $countValid++;
@@ -169,6 +174,11 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                         <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-semibold ticket-filter-btn" data-ticket-filter="valid">
                             <i class="bi bi-shield-check me-1"></i>Chưa sử dụng (<?= $countValid ?>)
                         </button>
+                        <?php if ($countVerifying > 0): ?>
+                            <button type="button" class="btn btn-sm btn-outline-info text-dark rounded-pill px-3 py-1 fw-semibold ticket-filter-btn" data-ticket-filter="verifying">
+                                <i class="bi bi-hourglass-split me-1 text-primary"></i>Chờ xác nhận (<?= $countVerifying ?>)
+                            </button>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold ticket-filter-btn" data-ticket-filter="expired">
                             <i class="bi bi-clock-history me-1"></i>Hết hạn / Đã dùng (<?= $countExpired ?>)
                         </button>
@@ -222,8 +232,12 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                                             <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">
                                                 <i class="bi bi-shield-check me-1"></i>Chưa sử dụng
                                             </span>
+                                        <?php elseif ($status === 'verifying'): ?>
+                                            <span class="badge bg-warning text-dark border border-warning px-3 py-2 rounded-pill shadow-sm">
+                                                <i class="bi bi-hourglass-split me-1 text-danger"></i>Chờ xác nhận
+                                            </span>
                                         <?php else: ?>
-                                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                            <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">
                                                 <i class="bi bi-hourglass-split me-1"></i>Chờ thanh toán
                                             </span>
                                         <?php endif; ?>
@@ -290,6 +304,14 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                                             <!-- Vé chưa sử dụng (Sẵn sàng) -->
                                             <a href="<?= url('voucher/' . $o['ma_don_hang']) ?>" class="btn btn-success rounded-pill w-100 fw-semibold shadow-sm">
                                                 <i class="bi bi-qr-code me-1"></i>Xem E-Voucher &amp; Mã QR
+                                            </a>
+                                        <?php elseif ($status === 'verifying'): ?>
+                                            <!-- Chờ xác nhận chuyển khoản -->
+                                            <div class="p-2 mb-2 rounded-3 bg-warning bg-opacity-10 border border-warning-subtle text-dark small text-center fw-semibold">
+                                                <i class="bi bi-hourglass-split text-warning me-1"></i>Đang chờ Admin đối soát ngân hàng...
+                                            </div>
+                                            <a href="<?= url('booking/payment/' . $o['ma_don_hang']) ?>" class="btn btn-outline-primary rounded-pill w-100 fw-semibold shadow-xs">
+                                                <i class="bi bi-eye me-1"></i>Xem trạng thái đối soát
                                             </a>
                                         <?php else: ?>
                                             <!-- Chờ thanh toán -->
@@ -677,9 +699,10 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
         ticketFilterBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 ticketFilterBtns.forEach(b => {
-                    b.classList.remove('btn-primary', 'btn-success', 'btn-secondary', 'btn-danger', 'btn-warning', 'text-dark', 'active');
+                    b.classList.remove('btn-primary', 'btn-success', 'btn-secondary', 'btn-danger', 'btn-warning', 'btn-info', 'text-dark', 'active');
                     const f = b.getAttribute('data-ticket-filter');
                     if (f === 'valid') b.className = 'btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-semibold ticket-filter-btn';
+                    else if (f === 'verifying') b.className = 'btn btn-sm btn-outline-info text-dark rounded-pill px-3 py-1 fw-semibold ticket-filter-btn';
                     else if (f === 'expired') b.className = 'btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold ticket-filter-btn';
                     else if (f === 'cancelled') b.className = 'btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-semibold ticket-filter-btn';
                     else if (f === 'pending') b.className = 'btn btn-sm btn-outline-warning text-dark rounded-pill px-3 py-1 fw-semibold ticket-filter-btn';
@@ -688,6 +711,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
 
                 const filter = this.getAttribute('data-ticket-filter');
                 if (filter === 'valid') this.className = 'btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold ticket-filter-btn active';
+                else if (filter === 'verifying') this.className = 'btn btn-sm btn-info text-dark rounded-pill px-3 py-1 fw-semibold ticket-filter-btn active';
                 else if (filter === 'expired') this.className = 'btn btn-sm btn-secondary rounded-pill px-3 py-1 fw-semibold ticket-filter-btn active';
                 else if (filter === 'cancelled') this.className = 'btn btn-sm btn-danger rounded-pill px-3 py-1 fw-semibold ticket-filter-btn active';
                 else if (filter === 'pending') this.className = 'btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-semibold ticket-filter-btn active';
