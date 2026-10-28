@@ -69,6 +69,20 @@ class DanhGia
     }
 
     /**
+     * Lấy đánh giá của một người dùng cụ thể tại địa điểm
+     */
+    public function layCuaToiTheoDiaDiem(int $nguoiDungId, int $diaDiemId): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM danh_gia WHERE nguoi_dung_id = :nguoi_dung_id AND dia_diem_id = :dia_diem_id LIMIT 1");
+        $stmt->execute([
+            'nguoi_dung_id' => $nguoiDungId,
+            'dia_diem_id'   => $diaDiemId
+        ]);
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
+
+    /**
      * Khách hàng thêm mới hoặc cập nhật đánh giá (kèm ảnh thực tế)
      */
     public function themMoi(int $nguoiDungId, int $diaDiemId, int $soSao, string $noiDung, ?string $hinhAnh = null): bool
@@ -79,15 +93,16 @@ class DanhGia
             ON DUPLICATE KEY UPDATE 
                 so_sao = VALUES(so_sao), 
                 noi_dung = VALUES(noi_dung), 
-                hinh_anh = COALESCE(VALUES(hinh_anh), hinh_anh), 
+                hinh_anh = :hinh_anh_update, 
                 trang_thai = 'da_duyet'
         ");
         return $stmt->execute([
-            'nguoi_dung_id' => $nguoiDungId,
-            'dia_diem_id'   => $diaDiemId,
-            'so_sao'        => $soSao,
-            'noi_dung'      => $noiDung,
-            'hinh_anh'      => $hinhAnh
+            'nguoi_dung_id'     => $nguoiDungId,
+            'dia_diem_id'       => $diaDiemId,
+            'so_sao'            => $soSao,
+            'noi_dung'          => $noiDung,
+            'hinh_anh'          => $hinhAnh,
+            'hinh_anh_update'   => $hinhAnh
         ]);
     }
 
@@ -200,12 +215,43 @@ class DanhGia
     }
 
     /**
-     * Xóa đánh giá vĩnh viễn
+     * Xóa đánh giá vĩnh viễn (Admin)
      */
     public function xoa(int $id): bool
     {
         $stmt = $this->db->prepare("DELETE FROM danh_gia WHERE id = :id");
         return $stmt->execute(['id' => $id]);
+    }
+
+    /**
+     * Khách hàng tự xóa đánh giá của chính mình (kèm dọn dẹp file ảnh vật lý)
+     */
+    public function xoaBoiNguoiDung(int $id, int $nguoiDungId): bool
+    {
+        $stmt = $this->db->prepare("SELECT hinh_anh FROM danh_gia WHERE id = :id AND nguoi_dung_id = :nguoi_dung_id");
+        $stmt->execute(['id' => $id, 'nguoi_dung_id' => $nguoiDungId]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return false;
+        }
+
+        // Xóa các file ảnh vật lý nếu có
+        if (!empty($row['hinh_anh'])) {
+            $photos = json_decode($row['hinh_anh'], true);
+            if (is_array($photos)) {
+                $baseDir = dirname(__DIR__, 2) . '/public/';
+                foreach ($photos as $p) {
+                    $fullPath = $baseDir . $p;
+                    if (file_exists($fullPath) && is_file($fullPath)) {
+                        @unlink($fullPath);
+                    }
+                }
+            }
+        }
+
+        $delStmt = $this->db->prepare("DELETE FROM danh_gia WHERE id = :id AND nguoi_dung_id = :nguoi_dung_id");
+        return $delStmt->execute(['id' => $id, 'nguoi_dung_id' => $nguoiDungId]);
     }
 
     /**

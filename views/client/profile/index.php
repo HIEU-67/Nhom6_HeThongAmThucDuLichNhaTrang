@@ -543,27 +543,59 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                                         <p class="text-secondary small mb-0 lh-base">
                                             "<?= nl2br(htmlspecialchars($rev['noi_dung'])) ?>"
                                         </p>
-                                        <?php if (!empty($rev['hinh_anh'])): ?>
+                                        <?php 
+                                            $revPhotos = [];
+                                            if (!empty($rev['hinh_anh'])) {
+                                                $decoded = json_decode($rev['hinh_anh'], true);
+                                                if (is_array($decoded)) {
+                                                    $revPhotos = $decoded;
+                                                } elseif (is_string($rev['hinh_anh']) && !empty(trim($rev['hinh_anh']))) {
+                                                    $revPhotos = [trim($rev['hinh_anh'])];
+                                                }
+                                            }
+                                        ?>
+                                        <?php if (!empty($revPhotos)): ?>
                                             <div class="mt-2 pt-2 border-top">
-                                                <span class="text-muted small d-block mb-1"><i class="bi bi-camera-fill me-1 text-primary"></i>Ảnh bạn đã đăng:</span>
-                                                <img src="<?= htmlspecialchars(\App\Helpers\FormatHelper::hinhAnh($rev['hinh_anh'])) ?>" 
-                                                     alt="Ảnh đánh giá" 
-                                                     class="rounded-3 border object-fit-cover shadow-sm" 
-                                                     style="max-height: 90px; max-width: 130px; cursor: pointer;"
-                                                     onclick="window.open('<?= htmlspecialchars(\App\Helpers\FormatHelper::hinhAnh($rev['hinh_anh'])) ?>', '_blank')">
+                                                <span class="text-muted small d-block mb-1.5"><i class="bi bi-camera-fill me-1 text-primary"></i>Ảnh bạn đã đăng (<?= count($revPhotos) ?>):</span>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <?php foreach ($revPhotos as $p): ?>
+                                                        <?php $imgUrl = \App\Helpers\FormatHelper::hinhAnh($p); ?>
+                                                        <a href="<?= htmlspecialchars($imgUrl) ?>" target="_blank" class="d-inline-block rounded-3 overflow-hidden border shadow-sm" title="Bấm để xem ảnh kích thước đầy đủ">
+                                                            <img src="<?= htmlspecialchars($imgUrl) ?>" 
+                                                                 alt="Ảnh đánh giá" 
+                                                                 class="object-fit-cover shadow-sm" 
+                                                                 style="width: 78px; height: 78px; transition: transform 0.2s ease;"
+                                                                 onmouseover="this.style.transform='scale(1.05)'"
+                                                                 onmouseout="this.style.transform='scale(1)'"
+                                                                 loading="lazy">
+                                                        </a>
+                                                    <?php endforeach; ?>
+                                                </div>
                                             </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
 
-                                <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
+                                <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto flex-wrap gap-2">
                                     <span class="badge <?= ($rev['trang_thai'] === 'da_duyet') ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis' ?> rounded-pill px-3 py-1 fw-semibold small">
                                         <i class="bi <?= ($rev['trang_thai'] === 'da_duyet') ? 'bi-check-circle-fill' : 'bi-clock-history' ?> me-1"></i>
                                         <?= ($rev['trang_thai'] === 'da_duyet') ? 'Đã duyệt công khai' : 'Đang chờ duyệt' ?>
                                     </span>
-                                    <a href="<?= url('dia-diem/' . $rev['duong_dan']) ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                        Xem địa điểm &rarr;
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <a href="<?= url('dia-diem/' . $rev['duong_dan']) ?>#reviewSection" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 small" title="Sửa đánh giá tại trang địa điểm">
+                                            <i class="bi bi-pencil-square me-1"></i>Sửa
+                                        </a>
+                                        <form action="<?= url('profile/danh-gia/xoa') ?>" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài đánh giá này không? Hành động này không thể hoàn tác.');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="danh_gia_id" value="<?= (int)$rev['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 small" title="Xóa bài đánh giá">
+                                                <i class="bi bi-trash3 me-1"></i>Xóa
+                                            </button>
+                                        </form>
+                                        <a href="<?= url('dia-diem/' . $rev['duong_dan']) ?>" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 small">
+                                            Xem địa điểm &rarr;
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
