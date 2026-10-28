@@ -1314,3 +1314,45 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initLiveAutoSuggest();
 });
+
+// ==========================================
+// HỆ THỐNG ĐIỀU KHIỂN GIAO DIỆN DARK MODE
+// ==========================================
+window.updateThemeUI = function(theme) {
+    const isDark = (theme === 'dark');
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    try {
+        localStorage.setItem('nhatrang_theme', theme);
+    } catch (e) {}
+
+    // Cập nhật nút trên Navbar
+    const navDarkIcons = document.querySelectorAll('.theme-icon-dark');
+    const navLightIcons = document.querySelectorAll('.theme-icon-light');
+    const navLabels = document.querySelectorAll('.theme-label-nav');
+
+    navDarkIcons.forEach(el => el.classList.toggle('d-none', isDark));
+    navLightIcons.forEach(el => el.classList.toggle('d-none', !isDark));
+    navLabels.forEach(el => el.textContent = isDark ? 'Sáng' : 'Tối');
+
+    // Cập nhật nút Floating bên cạnh widget AI
+    const floatDarkIcons = document.querySelectorAll('.theme-float-icon-dark');
+    const floatLightIcons = document.querySelectorAll('.theme-float-icon-light');
+    floatDarkIcons.forEach(el => el.classList.toggle('d-none', isDark));
+    floatLightIcons.forEach(el => el.classList.toggle('d-none', !isDark));
+};
+
+window.toggleTheme = function() {
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+    const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+    window.updateThemeUI(newTheme);
+};
+
+// Đồng bộ giao diện khi trang tải xong
+(function() {
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme') || localStorage.getItem('nhatrang_theme') || 'light';
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => window.updateThemeUI(currentTheme));
+    } else {
+        window.updateThemeUI(currentTheme);
+    }
+})();

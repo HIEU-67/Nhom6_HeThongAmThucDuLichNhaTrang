@@ -519,6 +519,49 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
     z-index: 10;
 }
 
+/* ========================================================
+   DARK MODE OVERRIDES CHO AI TOUR MODAL
+   ======================================================== */
+[data-bs-theme="dark"] .ai-trip-modal {
+    background: #0f172a !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .ai-trip-header {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .ai-chat-scrollable {
+    background-color: #0b1329 !important;
+}
+
+[data-bs-theme="dark"] .ai-chat-input-toolbar {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .ai-sidebar-col {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .ai-quick-chip {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .ai-quick-chip:hover {
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .ai-login-barrier {
+    background: rgba(11, 19, 41, 0.88) !important;
+}
+
 @media (max-width: 991px) {
     .ai-trip-modal {
         height: auto;

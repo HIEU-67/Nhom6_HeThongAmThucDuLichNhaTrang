@@ -42,7 +42,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                     <!-- ========================================================
                          1. MÀN HÌNH CHỜ QUẢN TRỊ VIÊN ĐỐI SOÁT & XÁC NHẬN
                          ======================================================== -->
-                    <div id="waiting-admin-box" class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #86efac !important; display: <?= $isWaiting ? 'block' : 'none' ?>;">
+                    <div id="waiting-admin-box" class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4 waiting-admin-card" style="display: <?= $isWaiting ? 'block' : 'none' ?>;">
                         <div class="mb-3">
                             <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white shadow-sm" style="width: 72px; height: 72px; color: #16a34a;">
                                 <div class="spinner-border text-success" role="status" style="width: 2.2rem; height: 2.2rem;">
@@ -79,7 +79,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                     <!-- ========================================================
                          2. ĐỒNG HỒ ĐẾM NGƯỢC 10 PHÚT (Chỉ hiện khi chưa bấm chuyển khoản)
                          ======================================================== -->
-                    <div class="reservation-timer-banner mb-4 p-3 rounded-4 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm" id="timer-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac !important; display: <?= $isWaiting ? 'none !important' : 'flex' ?>;">
+                    <div class="reservation-timer-banner mb-4 p-3 rounded-4 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm" id="timer-box" style="display: <?= $isWaiting ? 'none !important' : 'flex' ?>;">
                         <div class="d-flex align-items-center gap-3">
                             <div class="timer-icon-wrap rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 48px; height: 48px; font-size: 22px; color: #16a34a;" id="timer-icon">
                                 <i class="bi bi-clock-history"></i>
@@ -103,7 +103,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                         <div class="row g-4 align-items-center mb-4">
                             <!-- Cột Mã QR Thanh Toán -->
                             <div class="col-md-5 text-center">
-                                <div class="p-2 border rounded-3 shadow-sm bg-white d-inline-block">
+                                <div class="p-2 border rounded-3 shadow-sm bg-white d-inline-block qr-image-wrapper">
                                     <img src="<?= $vietQrUrl ?>" alt="Mã VietQR Thanh Toán" class="img-fluid rounded" style="max-width: 240px;">
                                 </div>
                                 <p class="text-muted small mt-2 mb-0">
