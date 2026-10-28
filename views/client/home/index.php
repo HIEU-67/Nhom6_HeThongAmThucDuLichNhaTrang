@@ -90,7 +90,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
 
                             <!-- Nút Tìm kiếm -->
                             <div class="col-lg-2 col-md-12">
-                                <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold fs-6 shadow-sm d-flex align-items-center justify-content-center gap-2" style="background-color: #0284c7; border: none;">
+                                <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold fs-6 shadow-sm d-flex align-items-center justify-content-center gap-2">
                                     <i class="bi bi-search"></i>TÌM KIẾM
                                 </button>
                             </div>
@@ -327,7 +327,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
 <!-- ========================================================
      4. HOẠT ĐỘNG KHÔNG THỂ BỎ QUA & VÉ THAM QUAN ONLINE (AGODA STYLE)
      ======================================================== -->
-<section class="py-5" style="background-color: #f8fafc;">
+<section class="py-5 agoda-activities-section">
     <div class="container">
         <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
             <div>

@@ -9,7 +9,7 @@ $currentStep = $currentStep ?? 1;
     <div class="card border-0 shadow-sm rounded-4 bg-white p-3 p-md-4">
         <div class="d-flex align-items-center justify-content-between position-relative checkout-stepper-track">
             <!-- Đường kẻ tiến trình nền -->
-            <div class="checkout-progress-bar-bg position-absolute start-0 end-0" style="height: 4px; background: #e2e8f0; z-index: 1; top: 22px;"></div>
+            <div class="checkout-progress-bar-bg position-absolute start-0 end-0" style="height: 4px; z-index: 1; top: 22px;"></div>
             <!-- Đường kẻ tiến trình active -->
             <div class="checkout-progress-bar-fill position-absolute start-0" style="height: 4px; background: linear-gradient(90deg, #0284c7, #16a34a); z-index: 2; top: 22px; width: <?= $currentStep === 1 ? '16%' : ($currentStep === 2 ? '50%' : '100%') ?>; transition: width 0.4s ease;"></div>
 

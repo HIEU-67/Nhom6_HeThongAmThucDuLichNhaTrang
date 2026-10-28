@@ -154,10 +154,19 @@ $actionUrl = $isEdit ? url('admin/locations/edit/' . $location['id']) : url('adm
                 <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Ảnh Đại Diện</h6>
 
                 <?php if ($isEdit && !empty($location['anh_dai_dien'])): ?>
-                    <div class="mb-3 text-center">
-                        <img src="<?= htmlspecialchars(hinh_anh($location['anh_dai_dien'])) ?>" 
-                             alt="Ảnh hiện tại" class="img-fluid rounded-3 shadow-sm" style="max-height: 180px; object-fit: cover;">
-                        <div class="small text-muted mt-1">Ảnh đại diện hiện tại</div>
+                    <div class="mb-3 text-center position-relative" id="avatarPreviewBox">
+                        <div class="position-relative d-inline-block">
+                            <img src="<?= htmlspecialchars(hinh_anh($location['anh_dai_dien'])) ?>" 
+                                 alt="Ảnh hiện tại" id="currentAvatarImg" class="img-fluid rounded-3 shadow-sm border" style="max-height: 180px; object-fit: cover; transition: all 0.3s ease;">
+                            <div id="avatarDeletedBadge" class="position-absolute top-50 start-50 translate-middle badge bg-danger fs-6 p-2 shadow d-none" style="white-space: nowrap;">
+                                <i class="bi bi-trash me-1"></i>Sẽ xóa khi bấm Lưu
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm rounded-pill position-absolute bottom-0 end-0 m-2 shadow-sm" id="btnToggleDeleteAvatar" onclick="toggleAvatarDeletion()">
+                                <i class="bi bi-trash3 me-1"></i>Xóa ảnh đại diện
+                            </button>
+                        </div>
+                        <input type="hidden" name="xoa_anh_dai_dien" id="inputXoaAvatar" value="0">
+                        <div class="small text-muted mt-1" id="avatarStatusText">Ảnh đại diện hiện tại</div>
                     </div>
                 <?php endif; ?>
 
@@ -175,23 +184,52 @@ $actionUrl = $isEdit ? url('admin/locations/edit/' . $location['id']) : url('adm
 
             <!-- Thư viện ảnh phụ (Gallery) -->
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Thư Viện Ảnh (Gallery)</h6>
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Thư Viện Ảnh (Gallery)</h6>
+                    <?php if ($isEdit && !empty($gallery)): ?>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill small" id="existingCountBadge">
+                            <?= count($gallery) ?> ảnh đã lưu
+                        </span>
+                    <?php endif; ?>
+                </div>
 
                 <?php if ($isEdit && !empty($gallery)): ?>
-                    <div class="row g-2 mb-3">
+                    <div class="row g-2 mb-3" id="existingGalleryList">
                         <?php foreach ($gallery as $img): ?>
-                            <div class="col-4 position-relative">
-                                <img src="<?= htmlspecialchars(hinh_anh($img['duong_dan_anh'])) ?>" 
-                                     alt="Gallery" class="rounded w-100 object-fit-cover" style="height: 70px;">
+                            <div class="col-4 position-relative gallery-item-wrap" id="gallery-item-<?= (int)$img['id'] ?>">
+                                <div class="ratio ratio-16x9 rounded-3 overflow-hidden border shadow-2xs">
+                                    <img src="<?= htmlspecialchars(hinh_anh($img['duong_dan_anh'])) ?>" 
+                                         alt="Gallery" class="w-100 h-100 object-fit-cover">
+                                </div>
+                                <button type="button" 
+                                        class="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center shadow" 
+                                        style="width: 26px; height: 26px; font-size: 12px; z-index: 10;"
+                                        onclick="deleteExistingGalleryImage(<?= (int)$img['id'] ?>, <?= (int)$location['id'] ?>, this)" 
+                                        title="Xóa ảnh này khỏi thư viện">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
 
                 <div>
-                    <label class="form-label small fw-semibold">Tải thêm nhiều ảnh</label>
-                    <input type="file" name="gallery_images[]" class="form-control" accept="image/*" multiple>
+                    <label class="form-label small fw-semibold">Tải thêm nhiều ảnh vào thư viện</label>
+                    <input type="file" name="gallery_images[]" id="galleryFileInput" class="form-control" accept="image/*" multiple onchange="handleNewGallerySelect(this)">
                     <div class="form-text small">Có thể chọn nhiều file ảnh cùng lúc (JPG, PNG, WebP).</div>
+                </div>
+
+                <!-- Preview container cho các ảnh VỪA CHỌN THÊM (có nút xóa từng ảnh trước khi bấm Lưu) -->
+                <div id="newGalleryPreviewBox" class="mt-3 p-3 bg-light rounded-3 border d-none">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-primary">
+                            <i class="bi bi-images me-1"></i>Ảnh vừa chọn thêm (<span id="newFilesCount">0</span> file):
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 11.5px;" onclick="clearAllNewGalleryFiles()">
+                            <i class="bi bi-trash me-1"></i>Hủy tất cả
+                        </button>
+                    </div>
+                    <div class="row g-2" id="newGalleryPreviewList"></div>
                 </div>
             </div>
 
@@ -205,6 +243,157 @@ $actionUrl = $isEdit ? url('admin/locations/edit/' . $location['id']) : url('adm
         </div>
     </div>
 </form>
+
+<script>
+// 1. Quản lý danh sách file mới chọn (hỗ trợ xóa từng file vừa chọn)
+let newGalleryFilesList = [];
+
+function handleNewGallerySelect(input) {
+    if (!input.files || input.files.length === 0) return;
+
+    // Gộp các file mới chọn vào danh sách hiện tại
+    const files = Array.from(input.files);
+    newGalleryFilesList = newGalleryFilesList.concat(files);
+    syncFileInputAndRender();
+}
+
+function removeNewGalleryFile(index) {
+    if (index >= 0 && index < newGalleryFilesList.length) {
+        newGalleryFilesList.splice(index, 1);
+        syncFileInputAndRender();
+    }
+}
+
+function clearAllNewGalleryFiles() {
+    newGalleryFilesList = [];
+    syncFileInputAndRender();
+}
+
+function syncFileInputAndRender() {
+    const fileInput = document.getElementById('galleryFileInput');
+    const previewBox = document.getElementById('newGalleryPreviewBox');
+    const previewList = document.getElementById('newGalleryPreviewList');
+    const countSpan = document.getElementById('newFilesCount');
+
+    // Đồng bộ lại đối tượng FileList của input bằng DataTransfer API
+    const dt = new DataTransfer();
+    newGalleryFilesList.forEach(file => dt.items.add(file));
+    fileInput.files = dt.files;
+
+    if (newGalleryFilesList.length === 0) {
+        previewBox.classList.add('d-none');
+        previewList.innerHTML = '';
+        fileInput.value = '';
+        return;
+    }
+
+    countSpan.textContent = newGalleryFilesList.length;
+    previewBox.classList.remove('d-none');
+    previewList.innerHTML = '';
+
+    newGalleryFilesList.forEach((file, idx) => {
+        const objectUrl = URL.createObjectURL(file);
+        const col = document.createElement('div');
+        col.className = 'col-4 position-relative';
+        col.innerHTML = `
+            <div class="ratio ratio-16x9 rounded-3 overflow-hidden border shadow-2xs">
+                <img src="${objectUrl}" class="w-100 h-100 object-fit-cover" alt="Preview">
+            </div>
+            <button type="button" 
+                    class="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center shadow" 
+                    style="width: 24px; height: 24px; font-size: 11px; z-index: 10;" 
+                    onclick="removeNewGalleryFile(${idx})" 
+                    title="Xóa ảnh này khỏi danh sách tải lên">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="text-truncate small text-muted text-center mt-1" style="font-size: 10px;" title="${file.name}">
+                ${file.name}
+            </div>
+        `;
+        previewList.appendChild(col);
+    });
+}
+
+// 2. Xóa ảnh đã lưu trong thư viện (gọi API AJAX xóa tức thì khỏi CSDL)
+function deleteExistingGalleryImage(imageId, locationId, btn) {
+    if (!confirm('Bạn có chắc chắn muốn xóa ảnh này khỏi thư viện?')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 12px; height: 12px;"></span>';
+
+    const formData = new FormData();
+    formData.append('image_id', imageId);
+    formData.append('location_id', locationId);
+    formData.append('csrf_token', '<?= csrf_token() ?>');
+
+    fetch('<?= url('admin/locations/delete-image') ?>', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.getElementById('gallery-item-' + imageId);
+            if (item) {
+                item.style.transition = 'all 0.3s ease';
+                item.style.opacity = '0';
+                item.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    item.remove();
+                    const list = document.getElementById('existingGalleryList');
+                    const badge = document.getElementById('existingCountBadge');
+                    if (list) {
+                        const count = list.querySelectorAll('.gallery-item-wrap').length;
+                        if (badge) badge.textContent = count + ' ảnh đã lưu';
+                        if (count === 0) list.remove();
+                    }
+                }, 300);
+            }
+        } else {
+            alert(data.message || 'Lỗi khi xóa ảnh');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-trash3-fill"></i>';
+        }
+    })
+    .catch(err => {
+        alert('Lỗi kết nối khi xóa ảnh.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash3-fill"></i>';
+    });
+}
+
+// 3. Đánh dấu xóa ảnh đại diện hiện tại
+let isAvatarMarkedDeleted = false;
+function toggleAvatarDeletion() {
+    const input = document.getElementById('inputXoaAvatar');
+    const img = document.getElementById('currentAvatarImg');
+    const badge = document.getElementById('avatarDeletedBadge');
+    const btn = document.getElementById('btnToggleDeleteAvatar');
+    const statusText = document.getElementById('avatarStatusText');
+
+    isAvatarMarkedDeleted = !isAvatarMarkedDeleted;
+    if (isAvatarMarkedDeleted) {
+        input.value = '1';
+        img.style.opacity = '0.35';
+        img.style.filter = 'grayscale(100%)';
+        badge.classList.remove('d-none');
+        btn.className = 'btn btn-secondary btn-sm rounded-pill position-absolute bottom-0 end-0 m-2 shadow-sm';
+        btn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i>Hủy xóa';
+        statusText.textContent = 'Ảnh sẽ bị xóa khi bạn bấm "Lưu Thay Đổi"';
+        statusText.classList.add('text-danger');
+    } else {
+        input.value = '0';
+        img.style.opacity = '1';
+        img.style.filter = 'none';
+        badge.classList.add('d-none');
+        btn.className = 'btn btn-danger btn-sm rounded-pill position-absolute bottom-0 end-0 m-2 shadow-sm';
+        btn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Xóa ảnh đại diện';
+        statusText.textContent = 'Ảnh đại diện hiện tại';
+        statusText.classList.remove('text-danger');
+    }
+}
+</script>
 
 <?php require_once dirname(__DIR__, 2) . '/layouts/admin_footer.php'; ?>
 
