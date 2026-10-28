@@ -33,13 +33,53 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                     $maDon = $donHang['ma_don_hang'];
                     $phuongThuc = $donHang['phuong_thuc_thanh_toan'];
                     $remSeconds = (int)($remainingSeconds ?? 600);
+                    $isWaiting = !empty($isWaitingAdmin) || in_array($donHang['trang_thai_thanh_toan'], ['cho_xac_nhan']) || in_array($donHang['trang_thai_don_hang'], ['cho_xac_nhan']);
 
                     // Đường dẫn VietQR động chuẩn Napas
                     $vietQrUrl = "https://img.vietqr.io/image/{$bankId}-{$bankAccountNo}-compact2.jpg?amount={$soTien}&addInfo=" . urlencode($maDon) . "&accountName=" . urlencode($bankAccountName);
                     ?>
 
-                    <!-- Đồng Hồ Đếm Ngược Giữ Chỗ (10-Minute Reservation Timer) -->
-                    <div class="reservation-timer-banner mb-4 p-3 rounded-4 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm" id="timer-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac !important;">
+                    <!-- ========================================================
+                         1. MÀN HÌNH CHỜ QUẢN TRỊ VIÊN ĐỐI SOÁT & XÁC NHẬN
+                         ======================================================== -->
+                    <div id="waiting-admin-box" class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #86efac !important; display: <?= $isWaiting ? 'block' : 'none' ?>;">
+                        <div class="mb-3">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white shadow-sm" style="width: 72px; height: 72px; color: #16a34a;">
+                                <div class="spinner-border text-success" role="status" style="width: 2.2rem; height: 2.2rem;">
+                                    <span class="visually-hidden">Đang đối soát...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="h5 fw-bold text-dark mb-2">
+                            <i class="bi bi-hourglass-split me-1 text-warning"></i>Đang Chờ Quản Trị Viên Xác Nhận Thanh Toán
+                        </h4>
+                        <p class="text-secondary small mb-3 lh-base mx-auto" style="max-width: 540px;">
+                            Hệ thống đã ghi nhận thông báo chuyển khoản của bạn cho đơn hàng <strong class="text-primary">#<?= htmlspecialchars($maDon) ?></strong>. Quản trị viên tại quầy đang đối soát giao dịch ngân hàng (thông thường từ 1 - 3 phút).
+                        </p>
+
+                        <div class="alert alert-white bg-white border small text-start d-flex align-items-start gap-2 mb-3 mx-auto shadow-2xs" style="max-width: 540px;">
+                            <i class="bi bi-info-circle-fill text-primary fs-5 mt-0.5"></i>
+                            <div class="text-muted">
+                                <strong>Lựa chọn của bạn:</strong><br>
+                                &bull; <strong>Giữ nguyên màn hình này:</strong> Khi Admin bấm xác nhận, hệ thống sẽ tự động bắn pháo hoa và chuyển sang phiếu E-Voucher.<br>
+                                &bull; <strong>Hoặc yên tâm thoát ra ngoài:</strong> Vé đã được lưu trong mục cá nhân với trạng thái <em>Chờ xác nhận</em>. Sau khi đối soát xong, hệ thống sẽ tự động gửi email vé cho bạn.
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <a href="<?= url('profile') ?>" class="btn btn-outline-primary rounded-pill px-4 fw-semibold btn-sm">
+                                <i class="bi bi-person-circle me-1"></i>Về Trang Cá Nhân & Vé Của Tôi
+                            </a>
+                            <a href="<?= url('locations') ?>" class="btn btn-light border rounded-pill px-4 fw-semibold btn-sm text-secondary">
+                                <i class="bi bi-compass me-1"></i>Tiếp Tục Khám Phá Địa Điểm
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================
+                         2. ĐỒNG HỒ ĐẾM NGƯỢC 10 PHÚT (Chỉ hiện khi chưa bấm chuyển khoản)
+                         ======================================================== -->
+                    <div class="reservation-timer-banner mb-4 p-3 rounded-4 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm" id="timer-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac !important; display: <?= $isWaiting ? 'none !important' : 'flex' ?>;">
                         <div class="d-flex align-items-center gap-3">
                             <div class="timer-icon-wrap rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 48px; height: 48px; font-size: 22px; color: #16a34a;" id="timer-icon">
                                 <i class="bi bi-clock-history"></i>
@@ -56,105 +96,94 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                         </div>
                     </div>
 
-                    <div class="row g-4 align-items-center mb-4">
-                        <!-- Cột Mã QR Thanh Toán -->
-                        <div class="col-md-5 text-center">
-                            <div class="p-2 border rounded-3 shadow-sm bg-white d-inline-block">
-                                <img src="<?= $vietQrUrl ?>" alt="Mã VietQR Thanh Toán" class="img-fluid rounded" style="max-width: 240px;">
-                            </div>
-                            <p class="text-muted small mt-2 mb-0">
-                                <i class="bi bi-qr-code-scan me-1"></i>Quét bằng App Ngân hàng hoặc MoMo
-                            </p>
-                        </div>
-
-                        <!-- Cột Thông Tin Chuyển Khoản -->
-                        <div class="col-md-7">
-                            <h5 class="fw-bold text-dark mb-3">Thông Tin Chuyển Khoản</h5>
-
-                            <div class="bg-light p-3 rounded-3 border d-flex flex-column gap-2 small">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">Ngân hàng thụ hưởng:</span>
-                                    <strong class="text-dark"><?= htmlspecialchars($bankId) ?> Bank</strong>
+                    <!-- ========================================================
+                         3. KHỐI NỘI DUNG CHUYỂN KHOẢN & NÚT XÁC NHẬN
+                         ======================================================== -->
+                    <div id="payment-action-box" style="display: <?= $isWaiting ? 'none' : 'block' ?>;">
+                        <div class="row g-4 align-items-center mb-4">
+                            <!-- Cột Mã QR Thanh Toán -->
+                            <div class="col-md-5 text-center">
+                                <div class="p-2 border rounded-3 shadow-sm bg-white d-inline-block">
+                                    <img src="<?= $vietQrUrl ?>" alt="Mã VietQR Thanh Toán" class="img-fluid rounded" style="max-width: 240px;">
                                 </div>
+                                <p class="text-muted small mt-2 mb-0">
+                                    <i class="bi bi-qr-code-scan me-1"></i>Quét bằng App Ngân hàng hoặc MoMo
+                                </p>
+                            </div>
 
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Số tài khoản:</span>
-                                    <div>
-                                        <strong class="text-primary fs-6 me-2" id="copy-stk"><?= htmlspecialchars($bankAccountNo) ?></strong>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="copyText('copy-stk', this)">Copy</button>
+                            <!-- Cột Thông Tin Chuyển Khoản -->
+                            <div class="col-md-7">
+                                <h5 class="fw-bold text-dark mb-3">Thông Tin Chuyển Khoản</h5>
+
+                                <div class="bg-light p-3 rounded-3 border d-flex flex-column gap-2 small">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Ngân hàng thụ hưởng:</span>
+                                        <strong class="text-dark"><?= htmlspecialchars($bankId) ?> Bank</strong>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Số tài khoản:</span>
+                                        <div>
+                                            <strong class="text-primary fs-6 me-2" id="copy-stk"><?= htmlspecialchars($bankAccountNo) ?></strong>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="copyText('copy-stk', this)">Copy</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Chủ tài khoản:</span>
+                                        <strong class="text-dark"><?= htmlspecialchars($bankAccountName) ?></strong>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Số tiền thanh toán:</span>
+                                        <strong class="text-danger fs-5"><?= \App\Helpers\FormatHelper::tienTe($soTien) ?></strong>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                        <span class="text-muted">Nội dung chuyển khoản:</span>
+                                        <div>
+                                            <strong class="text-dark me-2" id="copy-noidung"><?= htmlspecialchars($maDon) ?></strong>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="copyText('copy-noidung', this)">Copy</button>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">Chủ tài khoản:</span>
-                                    <strong class="text-dark"><?= htmlspecialchars($bankAccountName) ?></strong>
+                                <div class="alert alert-warning small mt-3 mb-0 py-2">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Vui lòng giữ nguyên <strong>Nội dung chuyển khoản</strong> để hệ thống đối soát vé chính xác.
                                 </div>
-
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Số tiền thanh toán:</span>
-                                    <strong class="text-danger fs-5"><?= \App\Helpers\FormatHelper::tienTe($soTien) ?></strong>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                    <span class="text-muted">Nội dung chuyển khoản:</span>
-                                    <div>
-                                        <strong class="text-dark me-2" id="copy-noidung"><?= htmlspecialchars($maDon) ?></strong>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="copyText('copy-noidung', this)">Copy</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="alert alert-warning small mt-3 mb-0 py-2">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Vui lòng giữ nguyên <strong>Nội dung chuyển khoản</strong> để hệ thống tự động đối soát vé.
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Nút Xác Nhận Thanh Toán & Hủy Đơn -->
-                    <div class="d-flex flex-column gap-2 pt-3 border-top">
-                        <!-- Khối Giả Lập Sandbox (Dành cho Học tập & Đồ án) -->
-                        <div class="card border border-warning-subtle shadow-sm rounded-4 p-3 mb-2" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="badge bg-warning text-dark fw-bold px-2.5 py-1 rounded-pill">
-                                    <i class="bi bi-code-slash me-1"></i>Chế Độ Học Tập / Demo Mode
-                                </span>
-                                <span class="text-secondary small" style="font-size: 0.75rem;"><i class="bi bi-shield-check text-success me-1"></i>Không cần chuyển tiền thật</span>
-                            </div>
-                            <p class="small text-secondary mb-2 lh-sm">
-                                Bấm nút bên dưới để hệ thống kích hoạt ngầm tín hiệu Webhook ngân hàng xác nhận đã nhận tiền:
-                            </p>
-                            <button type="button" class="btn btn-warning w-100 py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2 border border-warning text-dark" id="btn-simulate-pay" onclick="simulatePaymentSuccess()">
-                                <i class="bi bi-lightning-charge-fill text-danger fs-5"></i>
-                                <span>⚡ Giả Lập Quét QR Thành Công (Demo Sandbox)</span>
-                            </button>
-                        </div>
-
-                        <form action="<?= url('booking/confirm-payment') ?>" method="POST">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="ma_don_hang" value="<?= htmlspecialchars($maDon) ?>">
-                            <button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-pill fs-5 shadow-sm" id="btn-confirm-pay">
-                                <i class="bi bi-check2-circle me-2"></i>Tôi Đã Hoàn Tất Chuyển Khoản
-                            </button>
-                        </form>
-
-                        <div class="row g-2 mt-1">
-                            <div class="col-sm-6">
-                                <button type="button" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
-                                    <i class="bi bi-x-circle me-1"></i>Hủy đơn hàng này
+                        <!-- Nút Hoàn Tất Chuyển Khoản & Hủy Đơn -->
+                        <div class="d-flex flex-column gap-2 pt-3 border-top">
+                            <form id="form-confirm-pay" action="<?= url('booking/confirm-payment') ?>" method="POST" onsubmit="handleCustomerConfirmPayment(event)">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="ma_don_hang" value="<?= htmlspecialchars($maDon) ?>">
+                                <button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-pill fs-5 shadow-sm d-flex align-items-center justify-content-center gap-2" id="btn-confirm-pay">
+                                    <i class="bi bi-check2-circle fs-4"></i>
+                                    <span>Tôi Đã Hoàn Tất Chuyển Khoản</span>
                                 </button>
-                            </div>
-                            <div class="col-sm-6">
-                                <a href="<?= url('voucher/' . $maDon) ?>" class="btn btn-light border w-100 rounded-pill py-2 text-muted fw-semibold">
-                                    <i class="bi bi-receipt me-1"></i>Xem phiếu vé tạm
-                                </a>
-                            </div>
-                        </div>
+                            </form>
 
-                        <div class="text-center mt-2">
-                            <span class="text-muted small">
-                                <i class="bi bi-shield-lock me-1"></i>Thanh toán bảo mật chuẩn VietQR NAPAS 247
-                            </span>
+                            <div class="row g-2 mt-1">
+                                <div class="col-sm-6">
+                                    <button type="button" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                                        <i class="bi bi-x-circle me-1"></i>Hủy đơn hàng này
+                                    </button>
+                                </div>
+                                <div class="col-sm-6">
+                                    <a href="<?= url('profile') ?>" class="btn btn-light border w-100 rounded-pill py-2 text-muted fw-semibold">
+                                        <i class="bi bi-person-circle me-1"></i>Về trang cá nhân
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-2">
+                                <span class="text-muted small">
+                                    <i class="bi bi-shield-lock me-1"></i>Thanh toán bảo mật chuẩn VietQR NAPAS 247
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -280,22 +309,23 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
         })();
     }
 
-    // Xử lý Giả lập Quét QR Chuyển Tiền Thành Công (Demo Sandbox cho Học tập/Đồ án)
-    function simulatePaymentSuccess() {
-        const btn = document.getElementById('btn-simulate-pay');
-        const overlay = document.getElementById('payment-success-overlay');
-        const voucherUrl = "<?= url('voucher/' . $maDon) ?>";
+    // Xử lý gửi xác nhận chuyển khoản ngân hàng tới Quản trị viên
+    function handleCustomerConfirmPayment(e) {
+        if (e) e.preventDefault();
+        const btn = document.getElementById('btn-confirm-pay');
+        const form = document.getElementById('form-confirm-pay');
+        const waitingBox = document.getElementById('waiting-admin-box');
+        const actionBox = document.getElementById('payment-action-box');
+        const timerBox = document.getElementById('timer-box');
 
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý giao dịch mô phỏng...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang gửi thông báo tới quản trị viên...';
         }
 
-        const formData = new FormData();
-        formData.append('ma_don_hang', '<?= htmlspecialchars($maDon) ?>');
-        formData.append('csrf_token', '<?= csrf_token() ?>');
+        const formData = new FormData(form);
 
-        fetch("<?= url('booking/simulate-payment') ?>", {
+        fetch("<?= url('booking/confirm-payment') ?>", {
             method: 'POST',
             body: formData,
             headers: {
@@ -305,34 +335,29 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
         .then(r => r.json())
         .then(res => {
             if (res.status === 'success') {
-                // 1. Hiện overlay chúc mừng
-                if (overlay) overlay.style.display = 'flex';
-                // 2. Kích hoạt hiệu ứng pháo hoa
-                launchFireworks();
-                // 3. Tự động chuyển hướng sau 2.4 giây
-                setTimeout(() => {
-                    window.location.href = res.voucher_url || voucherUrl;
-                }, 2400);
+                if (actionBox) actionBox.style.display = 'none';
+                if (timerBox) timerBox.style.setProperty('display', 'none', 'important');
+                if (waitingBox) {
+                    waitingBox.style.display = 'block';
+                    waitingBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             } else {
-                alert(res.message || 'Lỗi khi mô phỏng thanh toán.');
+                alert(res.message || 'Lỗi khi gửi thông báo chuyển khoản.');
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-lightning-charge-fill text-danger fs-5"></i><span>⚡ Giả Lập Quét QR Thành Công (Demo Sandbox)</span>';
+                    btn.innerHTML = '<i class="bi bi-check2-circle fs-4"></i><span>Tôi Đã Hoàn Tất Chuyển Khoản</span>';
                 }
             }
         })
         .catch(err => {
-            alert('Lỗi kết nối máy chủ!');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-lightning-charge-fill text-danger fs-5"></i><span>⚡ Giả Lập Quét QR Thành Công (Demo Sandbox)</span>';
-            }
+            if (form) form.submit();
         });
     }
 
-    // Logic Đếm Ngược 10 Phút & Auto-Polling
+    // Logic Đếm Ngược 10 Phút & Auto-Polling Thời Gian Thực
     (function() {
         let remainingSeconds = <?= $remSeconds ?>;
+        let isWaitingAdmin = <?= $isWaiting ? 'true' : 'false' ?>;
         const displayEl = document.getElementById('timer-display');
         const boxEl = document.getElementById('timer-box');
         const iconEl = document.getElementById('timer-icon');
@@ -343,8 +368,12 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
         const profileUrl = "<?= url('profile') ?>";
         const voucherUrl = "<?= url('voucher/' . $maDon) ?>";
         const overlay = document.getElementById('payment-success-overlay');
+        const waitingBox = document.getElementById('waiting-admin-box');
+        const actionBox = document.getElementById('payment-action-box');
 
         function updateDisplay() {
+            if (isWaitingAdmin) return;
+
             if (remainingSeconds <= 0) {
                 if (displayEl) displayEl.innerText = "00:00";
                 if (boxEl) {
@@ -384,6 +413,11 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
 
         // Đếm ngược mỗi giây
         const timerInterval = setInterval(function() {
+            if (isWaitingAdmin) {
+                clearInterval(timerInterval);
+                return;
+            }
+
             remainingSeconds--;
             updateDisplay();
 
@@ -397,7 +431,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
             }
         }, 1000);
 
-        // Polling trạng thái đơn hàng mỗi 5 giây (nếu admin xác nhận ở tab khác, tự nổ pháo hoa và chuyển hướng)
+        // Polling trạng thái đơn hàng mỗi 3.5 giây (khi Admin bấm xác nhận, tự nổ pháo hoa và chuyển hướng)
         const pollInterval = setInterval(function() {
             fetch(checkUrl)
                 .then(r => r.json())
@@ -409,8 +443,13 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                             if (overlay) overlay.style.display = 'flex';
                             launchFireworks();
                             setTimeout(() => {
-                                window.location.href = voucherUrl;
+                                window.location.href = res.voucher_url || voucherUrl;
                             }, 2400);
+                        } else if (res.is_waiting_admin && !isWaitingAdmin) {
+                            isWaitingAdmin = true;
+                            if (actionBox) actionBox.style.display = 'none';
+                            if (boxEl) boxEl.style.setProperty('display', 'none', 'important');
+                            if (waitingBox) waitingBox.style.display = 'block';
                         } else if (res.is_cancelled) {
                             clearInterval(timerInterval);
                             clearInterval(pollInterval);
@@ -420,7 +459,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                     }
                 })
                 .catch(() => {});
-        }, 5000);
+        }, 3500);
     })();
 </script>
 

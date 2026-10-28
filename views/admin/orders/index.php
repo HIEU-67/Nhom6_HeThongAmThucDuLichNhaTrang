@@ -36,6 +36,7 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
             <label class="form-label small fw-semibold text-muted">Trạng thái vé</label>
             <select name="trang_thai_don" class="form-select">
                 <option value="">-- Tất cả trạng thái đơn --</option>
+                <option value="cho_xac_nhan" <?= ($trangThaiDon ?? '') === 'cho_xac_nhan' ? 'selected' : '' ?>>Chờ xác nhận</option>
                 <option value="moi_tao" <?= ($trangThaiDon ?? '') === 'moi_tao' ? 'selected' : '' ?>>Mới tạo</option>
                 <option value="da_xac_nhan" <?= ($trangThaiDon ?? '') === 'da_xac_nhan' ? 'selected' : '' ?>>Đã xác nhận (Hợp lệ)</option>
                 <option value="hoan_thanh" <?= ($trangThaiDon ?? '') === 'hoan_thanh' ? 'selected' : '' ?>>Đã soát vé (Hoàn thành)</option>
@@ -49,6 +50,7 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
             <select name="trang_thai_tt" class="form-select">
                 <option value="">-- Tất cả --</option>
                 <option value="da_thanh_toan" <?= ($trangThaiTt ?? '') === 'da_thanh_toan' ? 'selected' : '' ?>>Đã thanh toán</option>
+                <option value="cho_xac_nhan" <?= ($trangThaiTt ?? '') === 'cho_xac_nhan' ? 'selected' : '' ?>>Chờ Admin xác nhận</option>
                 <option value="cho_thanh_toan" <?= ($trangThaiTt ?? '') === 'cho_thanh_toan' ? 'selected' : '' ?>>Chờ thanh toán</option>
             </select>
         </div>
@@ -116,16 +118,48 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                                 </a>
                             </td>
                             <td class="fw-bold text-danger"><?= \App\Helpers\FormatHelper::tienTe((float)$o['tong_tien']) ?></td>
+                            <?php 
+                                $isPaid = ($o['trang_thai_thanh_toan'] === 'da_thanh_toan');
+                                $isWaitVerify = ($o['trang_thai_thanh_toan'] === 'cho_xac_nhan' || $o['trang_thai_don_hang'] === 'cho_xac_nhan');
+                            ?>
                             <td>
-                                <span class="badge <?= $o['trang_thai_thanh_toan'] === 'da_thanh_toan' ? 'bg-success' : 'bg-warning text-dark' ?>">
-                                    <?= $o['trang_thai_thanh_toan'] === 'da_thanh_toan' ? 'Đã thanh toán' : 'Chờ thanh toán' ?>
-                                </span>
+                                <?php if ($isPaid): ?>
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Đã thanh toán</span>
+                                <?php elseif ($isWaitVerify): ?>
+                                    <span class="badge bg-warning text-dark border border-warning shadow-xs">
+                                        <i class="bi bi-bell-fill text-danger me-1"></i>Khách báo đã chuyển
+                                    </span>
+                                    <?php if ($o['trang_thai_don_hang'] !== 'da_huy'): ?>
+                                        <form action="<?= url('admin/orders/confirm-payment') ?>" method="POST" class="mt-1" onsubmit="return confirm('Xác nhận bạn đã kiểm tra tài khoản và nhận đủ tiền <?= \App\Helpers\FormatHelper::tienTe((float)$o['tong_tien']) ?> cho đơn hàng <?= htmlspecialchars($o['ma_don_hang']) ?>?');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="don_hang_id" value="<?= (int)$o['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-success py-0.5 px-2.5 rounded-pill fw-bold shadow-xs d-block mt-1" style="font-size: 11px;" title="Xác nhận đối soát nhận tiền">
+                                                <i class="bi bi-cash-coin me-1"></i>Xác nhận tiền
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="badge bg-light text-secondary border">
+                                        <i class="bi bi-clock me-1"></i>Chờ thanh toán
+                                    </span>
+                                    <?php if ($o['trang_thai_don_hang'] !== 'da_huy' && $o['phuong_thuc_thanh_toan'] !== 'tai_quay'): ?>
+                                        <form action="<?= url('admin/orders/confirm-payment') ?>" method="POST" class="mt-1" onsubmit="return confirm('Xác nhận bạn đã kiểm tra tài khoản và nhận đủ tiền <?= \App\Helpers\FormatHelper::tienTe((float)$o['tong_tien']) ?> cho đơn hàng <?= htmlspecialchars($o['ma_don_hang']) ?>?');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="don_hang_id" value="<?= (int)$o['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2 rounded-pill fw-semibold shadow-xs d-block mt-1" style="font-size: 10.5px;" title="Xác nhận đã nhận tiền">
+                                                <i class="bi bi-cash-coin me-1"></i>Xác nhận nhận tiền
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($o['trang_thai_don_hang'] === 'hoan_thanh'): ?>
                                     <span class="badge bg-success"><i class="bi bi-check2-circle me-1"></i>Đã nhận vé</span>
                                 <?php elseif ($o['trang_thai_don_hang'] === 'da_xac_nhan'): ?>
                                     <span class="badge bg-info text-dark"><i class="bi bi-shield-check me-1"></i>Hợp lệ (Chờ soát)</span>
+                                <?php elseif ($isWaitVerify): ?>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning"><i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận</span>
                                 <?php elseif ($o['trang_thai_don_hang'] === 'da_huy'): ?>
                                     <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Đã hủy</span>
                                 <?php else: ?>
@@ -134,20 +168,42 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                             </td>
                             <td class="small text-muted"><?= \App\Helpers\FormatHelper::ngayThang($o['ngay_tao']) ?></td>
                             <td class="text-end">
-                                <div class="d-inline-flex gap-2">
-                                    <a href="<?= url('voucher/' . $o['ma_don_hang']) ?>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2" title="Xem chi tiết E-Voucher">
+                                <div class="d-inline-flex align-items-center gap-2">
+                                    <a href="<?= url('voucher/' . $o['ma_don_hang']) ?>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2.5" title="Xem chi tiết E-Voucher">
                                         <i class="bi bi-eye me-1"></i>Phiếu
                                     </a>
                                     
                                     <?php if ($o['trang_thai_don_hang'] !== 'hoan_thanh' && $o['trang_thai_don_hang'] !== 'da_huy'): ?>
-                                        <form action="<?= url('admin/orders/update-status') ?>" method="POST" onsubmit="return confirm('Xác nhận đã kiểm tra E-Voucher và trao vé vào cổng cho khách hàng <?= htmlspecialchars($o['ten_khach_hang']) ?>?');">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="don_hang_id" value="<?= (int)$o['id'] ?>">
-                                            <input type="hidden" name="trang_thai" value="hoan_thanh">
-                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
-                                                <i class="bi bi-check2-circle me-1"></i>Đổi Vé
-                                            </button>
-                                        </form>
+                                        <?php if ($o['phuong_thuc_thanh_toan'] !== 'tai_quay' && !$isPaid): ?>
+                                            <!-- Vé online chưa thanh toán: KHÔNG cho đổi vé, hướng dẫn xác nhận tiền -->
+                                            <form action="<?= url('admin/orders/confirm-payment') ?>" method="POST" onsubmit="return confirm('Đơn hàng này khách đã báo chuyển khoản. Xác nhận bạn đã nhận đủ số tiền <?= \App\Helpers\FormatHelper::tienTe((float)$o['tong_tien']) ?> để kích hoạt vé?');">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="don_hang_id" value="<?= (int)$o['id'] ?>">
+                                                <button type="submit" class="btn btn-sm <?= $isWaitVerify ? 'btn-success' : 'btn-warning text-dark' ?> rounded-pill px-3 fw-bold shadow-xs" title="Xác nhận tiền trước khi đổi vé">
+                                                    <i class="bi bi-cash-coin me-1"></i>Xác nhận tiền
+                                                </button>
+                                            </form>
+                                        <?php elseif ($o['phuong_thuc_thanh_toan'] === 'tai_quay' && !$isPaid): ?>
+                                            <!-- Vé thanh toán tại quầy: Admin thu tiền mặt và đổi vé cùng lúc -->
+                                            <form action="<?= url('admin/orders/update-status') ?>" method="POST" onsubmit="return confirm('Xác nhận ĐÃ THU TIỀN MẶT <?= \App\Helpers\FormatHelper::tienTe((float)$o['tong_tien']) ?> tại quầy và trao vé vào cổng cho khách hàng <?= htmlspecialchars($o['ten_khach_hang']) ?>?');">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="don_hang_id" value="<?= (int)$o['id'] ?>">
+                                                <input type="hidden" name="trang_thai" value="hoan_thanh">
+                                                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-xs">
+                                                    <i class="bi bi-cash me-1"></i>Thu tiền & Đổi vé
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <!-- Đã thanh toán đầy đủ: Đổi vé vào cổng bình thường -->
+                                            <form action="<?= url('admin/orders/update-status') ?>" method="POST" onsubmit="return confirm('Xác nhận đã kiểm tra E-Voucher hợp lệ và trao vé vào cổng cho khách hàng <?= htmlspecialchars($o['ten_khach_hang']) ?>?');">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="don_hang_id" value="<?= (int)$o['id'] ?>">
+                                                <input type="hidden" name="trang_thai" value="hoan_thanh">
+                                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold shadow-xs">
+                                                    <i class="bi bi-check2-circle me-1"></i>Đổi Vé
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </td>
