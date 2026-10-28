@@ -307,7 +307,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
             <div class="col-lg-3 col-md-6">
                 <a href="<?= url('dia-diem/' . $sp['duong_dan']) ?>" class="text-decoration-none">
                     <div class="agoda-spotlight-card">
-                        <img src="<?= htmlspecialchars($sp['anh_dai_dien']) ?>" alt="<?= htmlspecialchars($sp['ten_dia_diem']) ?>" class="agoda-spotlight-img" loading="lazy">
+                        <img src="<?= htmlspecialchars(hinh_anh($sp['anh_dai_dien'])) ?>" alt="<?= htmlspecialchars($sp['ten_dia_diem']) ?>" class="agoda-spotlight-img" loading="lazy">
                         <div class="agoda-spotlight-overlay">
                             <span class="badge bg-warning text-dark px-2 py-1 rounded-pill small fw-bold mb-2 align-self-start">
                                 <i class="bi bi-star-fill me-1"></i><?= number_format($sp['diem_danh_gia'], 1) ?> ⭐
@@ -349,7 +349,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                 <div class="col-xl-3 col-lg-4 col-md-6">
                     <div class="activity-item-card">
                         <div class="position-relative">
-                            <img src="<?= htmlspecialchars($tk['anh_dai_dien']) ?>" alt="<?= htmlspecialchars($tk['ten_dia_diem']) ?>" class="activity-thumb" loading="lazy">
+                            <img src="<?= htmlspecialchars(hinh_anh($tk['anh_dai_dien'])) ?>" alt="<?= htmlspecialchars($tk['ten_dia_diem']) ?>" class="activity-thumb" loading="lazy">
                             <div class="position-absolute top-0 start-0 m-2">
                                 <span class="badge bg-primary text-white small px-2 py-1 rounded-pill shadow-sm">
                                     <i class="bi bi-ticket-perforated me-1"></i>Vé Online
@@ -516,7 +516,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
             <div class="col-lg-3 col-md-6">
                 <div class="activity-item-card">
                     <div class="position-relative">
-                        <img src="<?= htmlspecialchars($food['anh_dai_dien']) ?>" alt="<?= htmlspecialchars($food['ten_dia_diem']) ?>" class="activity-thumb" loading="lazy">
+                        <img src="<?= htmlspecialchars(hinh_anh($food['anh_dai_dien'])) ?>" alt="<?= htmlspecialchars($food['ten_dia_diem']) ?>" class="activity-thumb" loading="lazy">
                         <div class="position-absolute top-0 start-0 m-2">
                             <span class="badge bg-danger text-white small px-2 py-1 rounded-pill shadow-sm">
                                 Ẩm Thực
