@@ -32,6 +32,16 @@
     ?>
     <link rel="stylesheet" href="<?= url('assets/css/style.css?v=' . $cssVersion) ?>">
 
+    <!-- Khởi tạo sớm chế độ Dark Mode (Ngăn chặn chớp trắng FOUC) -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('nhatrang_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            } catch (e) {}
+        })();
+    </script>
+
     <!-- Cấu hình ứng dụng & Map API Key từ .env -->
     <script>
         window.APP_URL = "<?= rtrim(url(''), '/') ?>";

@@ -102,6 +102,12 @@ class BookingController
             flash('success', 'Đặt vé thành công! Mã đơn hàng của bạn là: ' . $maDonHang);
 
             if ($phuongThuc === 'tai_quay') {
+                // Gửi email xác nhận đặt vé tại quầy cho khách hàng
+                $donHangTaiQuay = $this->donHangModel->timTheoMa($maDonHang);
+                if ($donHangTaiQuay) {
+                    $chiTiet = $this->donHangModel->chiTiet((int)$donHangTaiQuay['id']);
+                    \App\Helpers\MailHelper::guiEmailXacNhan($donHangTaiQuay, $chiTiet);
+                }
                 redirect(url('voucher/' . $maDonHang));
             } else {
                 redirect(url('booking/payment/' . $maDonHang));
@@ -147,8 +153,10 @@ class BookingController
         $elapsed = time() - $createdTimestamp;
         $remainingSeconds = max(0, 600 - $elapsed);
 
-        // Tự động hủy nếu đã quá 10 phút
-        if ($remainingSeconds <= 0 && $donHang['trang_thai_thanh_toan'] === 'cho_thanh_toan') {
+        $isWaitingAdmin = ($donHang['trang_thai_thanh_toan'] === 'cho_xac_nhan' || $donHang['trang_thai_don_hang'] === 'cho_xac_nhan');
+
+        // Chỉ tự động hủy nếu đơn hàng chưa thanh toán và khách CHƯA bấm hoàn tất chuyển khoản
+        if ($remainingSeconds <= 0 && $donHang['trang_thai_thanh_toan'] === 'cho_thanh_toan' && !$isWaitingAdmin) {
             $this->donHangModel->huyDonHang((int)$donHang['id'], 'Hết hạn giữ chỗ 10 phút');
             flash('error', 'Đơn hàng ' . $maDonHang . ' đã hết hạn thời gian giữ chỗ (10 phút) và đã được tự động hủy để giải phóng vé.');
             redirect(url('profile'));
@@ -159,6 +167,7 @@ class BookingController
             'title'            => 'Cổng Thanh Toán - ' . $maDonHang,
             'donHang'          => $donHang,
             'remainingSeconds' => $remainingSeconds,
+            'isWaitingAdmin'   => $isWaitingAdmin,
         ]);
     }
 
@@ -166,7 +175,13 @@ class BookingController
     {
         AuthMiddleware::checkCustomer();
 
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+
         if (!validate_csrf()) {
+            if ($isAjax) {
+                echo json_encode(['status' => 'error', 'message' => 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.']);
+                exit;
+            }
             flash('error', 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ. Vui lòng thử lại.');
             redirect(url(''));
             return;
@@ -174,6 +189,10 @@ class BookingController
 
         $maDonHang = trim($_POST['ma_don_hang'] ?? '');
         if (empty($maDonHang)) {
+            if ($isAjax) {
+                echo json_encode(['status' => 'error', 'message' => 'Mã đơn hàng không hợp lệ.']);
+                exit;
+            }
             flash('error', 'Mã đơn hàng không hợp lệ.');
             redirect(url(''));
             return;
@@ -181,6 +200,10 @@ class BookingController
 
         $donHang = $this->donHangModel->timTheoMa($maDonHang);
         if (!$donHang) {
+            if ($isAjax) {
+                echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy đơn hàng.']);
+                exit;
+            }
             flash('error', 'Không tìm thấy đơn hàng.');
             redirect(url(''));
             return;
@@ -188,29 +211,44 @@ class BookingController
 
         if ($donHang['nguoi_dung_id'] != $_SESSION['user_id'] && ($_SESSION['user_role'] ?? '') !== 'admin') {
             http_response_code(403);
+            if ($isAjax) {
+                echo json_encode(['status' => 'error', 'message' => 'Bạn không có quyền cập nhật đơn hàng này.']);
+                exit;
+            }
             die("Bạn không có quyền cập nhật đơn hàng này.");
+        }
+
+        // Nếu đơn hàng đã thanh toán rồi thì thông báo thành công
+        if ($donHang['trang_thai_thanh_toan'] === 'da_thanh_toan') {
+            if ($isAjax) {
+                echo json_encode(['status' => 'success', 'is_paid' => true, 'voucher_url' => url('voucher/' . $maDonHang)]);
+                exit;
+            }
+            redirect(url('voucher/' . $maDonHang));
+            return;
         }
 
         try {
             $db = \App\Config\Database::getConnection();
             $db->beginTransaction();
 
-            // Cập nhật trạng thái đơn hàng
+            // Chuyển trạng thái đơn sang 'cho_xac_nhan' để chờ Admin đối soát ngân hàng
             $stmt = $db->prepare("
                 UPDATE don_hang 
-                SET trang_thai_thanh_toan = 'da_thanh_toan', 
-                    trang_thai_don_hang = 'da_xac_nhan' 
+                SET trang_thai_thanh_toan = 'cho_xac_nhan', 
+                    trang_thai_don_hang = 'cho_xac_nhan',
+                    ghi_chu = 'Khách đã thông báo chuyển khoản thành công, đang chờ Admin đối soát tài khoản' 
                 WHERE id = :id
             ");
             $stmt->execute(['id' => $donHang['id']]);
 
-            // Thêm bản ghi giao dịch thanh toán
-            $maGiaoDich = 'TXN' . date('YmdHis') . rand(100, 999);
+            // Thêm bản ghi giao dịch thanh toán ở trạng thái 'dang_cho'
+            $maGiaoDich = 'TXN_WAIT_' . date('YmdHis') . rand(100, 999);
             $stmtGiaoDich = $db->prepare("
                 INSERT INTO giao_dich_thanh_toan 
                 (don_hang_id, cong_thanh_toan, ma_giao_dich, so_tien, loai_tien_te, du_lieu_phan_hoi, trang_thai) 
                 VALUES 
-                (:don_hang_id, :cong, :ma_gd, :so_tien, 'VND', :phan_hoi, 'thanh_cong')
+                (:don_hang_id, :cong, :ma_gd, :so_tien, 'VND', :phan_hoi, 'dang_cho')
             ");
             $stmtGiaoDich->execute([
                 'don_hang_id' => $donHang['id'],
@@ -218,7 +256,7 @@ class BookingController
                 'ma_gd'       => $maGiaoDich,
                 'so_tien'     => $donHang['tong_tien'],
                 'phan_hoi'    => json_encode([
-                    'hinh_thuc' => 'VietQR Manual Transfer',
+                    'hinh_thuc' => 'Khách hàng gửi xác nhận đã chuyển khoản VietQR',
                     'thoi_gian' => date('Y-m-d H:i:s'),
                     'nguoi_xac_nhan_id' => $_SESSION['user_id']
                 ], JSON_UNESCAPED_UNICODE)
@@ -226,18 +264,28 @@ class BookingController
 
             $db->commit();
 
-            // Sinh mã QR E-Voucher trên máy chủ
+            // Đảm bảo mã QR E-Voucher sẵn sàng
             \App\Helpers\QrHelper::taoQrDonHang($maDonHang);
 
-            // Gửi email xác nhận kèm chi tiết vé
-            $chiTiet = $this->donHangModel->chiTiet((int)$donHang['id']);
-            \App\Helpers\MailHelper::guiEmailXacNhan($donHang, $chiTiet);
+            if ($isAjax) {
+                echo json_encode([
+                    'status'           => 'success',
+                    'state'            => 'waiting_admin',
+                    'is_waiting_admin' => true,
+                    'message'          => 'Đã ghi nhận thông báo chuyển khoản! Hệ thống đang chờ Admin kiểm tra số dư.'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
 
-            flash('success', 'Thanh toán thành công! E-Voucher của bạn đã được kích hoạt.');
-            redirect(url('voucher/' . $maDonHang));
+            flash('info', 'Đã ghi nhận thông báo chuyển khoản! Hệ thống đang chờ Admin đối soát và kích hoạt vé của bạn.');
+            redirect(url('booking/payment/' . $maDonHang));
         } catch (Exception $e) {
             if (isset($db) && $db->inTransaction()) {
                 $db->rollBack();
+            }
+            if ($isAjax) {
+                echo json_encode(['status' => 'error', 'message' => 'Lỗi khi gửi xác nhận: ' . $e->getMessage()]);
+                exit;
             }
             flash('error', 'Lỗi khi xác nhận thanh toán: ' . $e->getMessage());
             redirect(url('booking/payment/' . $maDonHang));
@@ -449,9 +497,10 @@ class BookingController
 
         $isCancelled = ($donHang['trang_thai_don_hang'] === 'da_huy');
         $isPaid = ($donHang['trang_thai_thanh_toan'] === 'da_thanh_toan');
+        $isWaitingAdmin = ($donHang['trang_thai_thanh_toan'] === 'cho_xac_nhan' || $donHang['trang_thai_don_hang'] === 'cho_xac_nhan');
 
-        // Tự động hủy nếu đã hết 10 phút
-        if ($remainingSeconds <= 0 && !$isPaid && !$isCancelled) {
+        // Chỉ tự động hủy nếu đơn hàng vẫn đang ở cho_thanh_toan (khách chưa bấm xác nhận) và đã quá 10 phút
+        if ($remainingSeconds <= 0 && !$isPaid && !$isCancelled && !$isWaitingAdmin) {
             $this->donHangModel->huyDonHang((int)$donHang['id'], 'Hết hạn giữ chỗ 10 phút');
             $isCancelled = true;
         }
@@ -464,9 +513,11 @@ class BookingController
             'status'            => 'success',
             'ma_don_hang'       => $maDonHang,
             'is_paid'           => $isPaid,
+            'is_waiting_admin'  => $isWaitingAdmin,
             'is_cancelled'      => $isCancelled,
             'remaining_seconds' => $remainingSeconds,
-            'formatted_time'    => $formattedTime
+            'formatted_time'    => $formattedTime,
+            'voucher_url'       => url('voucher/' . $maDonHang)
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

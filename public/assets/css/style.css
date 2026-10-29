@@ -1301,4 +1301,1058 @@ h1, h2, h3, h4, h5, h6,
     }
 }
 
+/* ========================================================
+   HỆ THỐNG GIAO DIỆN DARK MODE TOÀN DIỆN (WCAG 2.2 AA)
+   ======================================================== */
+
+/* 1. Thiết lập Biến Màu Dark Mode */
+[data-bs-theme="dark"] {
+    --color-background: #0b1329;
+    --color-card: #1e293b;
+    --color-foreground: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-muted: #94a3b8;
+    --color-muted-bg: #0f172a;
+    --color-border: #334155;
+    --color-border-subtle: #475569;
+    --color-border-focus: #38bdf8;
+    
+    --coastal-deep: #070d1e;
+    --sand-bg: #0b1329;
+    --card-bg: #1e293b;
+    --border-sand: #334155;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+
+    --bs-body-bg: #0b1329;
+    --bs-body-color: #f8fafc;
+    --bs-border-color: #334155;
+}
+
+/* 2. Màu nền toàn trang và cấu trúc cơ bản */
+[data-bs-theme="dark"] body {
+    background-color: #0b1329 !important;
+    color: #f8fafc !important;
+}
+
+/* 3. Đảo màu chuẩn cho các lớp tiện ích */
+[data-bs-theme="dark"] .bg-white {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .bg-light {
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .text-dark {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .text-secondary {
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .text-black-50 {
+    color: rgba(248, 250, 252, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .border {
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .border-top,
+[data-bs-theme="dark"] .border-bottom,
+[data-bs-theme="dark"] .border-start,
+[data-bs-theme="dark"] .border-end {
+    border-color: #334155 !important;
+}
+
+/* 4. Thẻ Card & Khối Nội Dung */
+[data-bs-theme="dark"] .card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-bs-theme="dark"] .card-header,
+[data-bs-theme="dark"] .card-footer {
+    background-color: rgba(15, 23, 42, 0.7) !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .location-item-card,
+[data-bs-theme="dark"] .activity-item-card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .location-item-card:hover,
+[data-bs-theme="dark"] .activity-item-card:hover {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 10px 28px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* 5. Header Navbar & Search */
+[data-bs-theme="dark"] .site-navbar {
+    background: rgba(11, 19, 41, 0.96) !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-bs-theme="dark"] .live-search-wrapper .live-search-input-group {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-bs-theme="dark"] .live-search-dropdown {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-bs-theme="dark"] .suggest-item {
+    color: #f8fafc !important;
+    border-bottom-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .suggest-item:hover,
+[data-bs-theme="dark"] .suggest-item.selected {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+}
+
+/* 6. Agoda Homepage Components */
+[data-bs-theme="dark"] .agoda-search-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .search-field-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .search-field-box input,
+[data-bs-theme="dark"] .search-field-box select {
+    background: transparent !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .agoda-tab-btn {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .agoda-tab-btn:hover {
+    color: #38bdf8 !important;
+    background: #0f172a !important;
+}
+
+[data-bs-theme="dark"] .agoda-tab-btn.active {
+    background: #0c4a6e !important;
+    color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .circle-cat-item {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .circle-cat-icon {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .circle-cat-item:hover .circle-cat-icon {
+    background: #0c4a6e !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+}
+
+/* 7. Bộ Lọc Địa Điểm & Chips */
+[data-bs-theme="dark"] .filter-panel {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .filter-chip {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .filter-chip:hover,
+[data-bs-theme="dark"] .filter-chip.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+}
+
+[data-bs-theme="dark"] #map-toggle-bar {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .map-view-btn {
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .map-view-btn.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+/* 8. Bản Đồ Leaflet Map Popups & Controls */
+[data-bs-theme="dark"] .map-frame {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .leaflet-popup-content-wrapper {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-bs-theme="dark"] .leaflet-popup-tip {
+    background: #1e293b !important;
+}
+
+[data-bs-theme="dark"] .leaflet-container a.leaflet-popup-close-button {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .leaflet-bar a {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .leaflet-bar a:hover {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+}
+
+/* 9. KIỂM SOÁT ĐỘ TƯƠNG PHẢN NÚT VÀ HOVER (HIGH CONTRAST BUTTONS) */
+[data-bs-theme="dark"] .btn-primary {
+    background-color: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .btn-primary:hover {
+    background-color: #0369a1 !important;
+    border-color: #0369a1 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-secondary {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .btn-secondary:hover {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-success {
+    background-color: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .btn-success:hover {
+    background-color: #15803d !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-danger {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .btn-danger:hover {
+    background-color: #b91c1c !important;
+    border-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-warning {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+[data-bs-theme="dark"] .btn-warning:hover {
+    background-color: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #000000 !important;
+}
+
+[data-bs-theme="dark"] .btn-light {
+    background-color: #334155 !important;
+    border-color: #475569 !important;
+    color: #f8fafc !important;
+}
+[data-bs-theme="dark"] .btn-light:hover {
+    background-color: #475569 !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+    color: #38bdf8 !important;
+    border-color: #0284c7 !important;
+    background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-primary:hover {
+    background-color: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+    color: #cbd5e1 !important;
+    border-color: #64748b !important;
+    background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-success {
+    color: #4ade80 !important;
+    border-color: #22c55e !important;
+    background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-success:hover {
+    background-color: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-danger {
+    color: #f87171 !important;
+    border-color: #ef4444 !important;
+    background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-danger:hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-warning {
+    color: #fbbf24 !important;
+    border-color: #f59e0b !important;
+    background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-warning:hover {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #0f172a !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-info {
+    color: #38bdf8 !important;
+    border-color: #0ea5e9 !important;
+    background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-info:hover {
+    background-color: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-light {
+    color: #f8fafc !important;
+    border-color: #64748b !important;
+}
+[data-bs-theme="dark"] .btn-outline-light:hover {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #f8fafc !important;
+}
+
+/* Thao tác nút lọc vé trong Trang cá nhân */
+[data-bs-theme="dark"] .ticket-filter-btn {
+    transition: all var(--transition-fast);
+}
+[data-bs-theme="dark"] .ticket-filter-btn.btn-outline-info {
+    color: #38bdf8 !important;
+    border-color: #0ea5e9 !important;
+}
+[data-bs-theme="dark"] .ticket-filter-btn.btn-outline-info:hover,
+[data-bs-theme="dark"] .ticket-filter-btn.btn-info {
+    background-color: #0ea5e9 !important;
+    color: #ffffff !important;
+}
+
+/* 10. Form Nhập Liệu, Select & Controls */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: #64748b !important;
+}
+
+[data-bs-theme="dark"] .input-group-text {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .form-check-input {
+    background-color: #0f172a;
+    border-color: #475569;
+}
+
+[data-bs-theme="dark"] .form-check-input:checked {
+    background-color: #0284c7;
+    border-color: #0284c7;
+}
+
+/* 11. Bảng Dữ Liệu Tables & List Groups */
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #f8fafc;
+    border-color: #334155;
+}
+
+[data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+    --bs-table-color-type: #f8fafc;
+    --bs-table-bg-type: rgba(255, 255, 255, 0.03);
+}
+
+[data-bs-theme="dark"] .table-hover>tbody>tr:hover>* {
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.06);
+    --bs-table-hover-color: #ffffff;
+}
+
+[data-bs-theme="dark"] .list-group-item {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+/* 12. Dropdown Menu & Modals */
+[data-bs-theme="dark"] .dropdown-menu {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .dropdown-header {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .dropdown-item {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .dropdown-item:hover,
+[data-bs-theme="dark"] .dropdown-item:focus {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .dropdown-divider {
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .modal-content {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+    border-color: #334155 !important;
+}
+
+/* 13. Hộp Thông Báo Alerts & Badges */
+[data-bs-theme="dark"] .alert-info {
+    background-color: #0c4a6e !important;
+    border-color: #0369a1 !important;
+    color: #e0f2fe !important;
+}
+
+[data-bs-theme="dark"] .alert-success {
+    background-color: #064e3b !important;
+    border-color: #059669 !important;
+    color: #dcfce7 !important;
+}
+
+[data-bs-theme="dark"] .alert-warning {
+    background-color: #78350f !important;
+    border-color: #b45309 !important;
+    color: #fef3c7 !important;
+}
+
+[data-bs-theme="dark"] .alert-danger {
+    background-color: #7f1d1d !important;
+    border-color: #b91c1c !important;
+    color: #fee2e2 !important;
+}
+
+[data-bs-theme="dark"] .badge.bg-warning {
+    color: #0f172a !important;
+}
+[data-bs-theme="dark"] .badge.bg-light {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+/* 14. Trang Thanh Toán, VietQR & Màn Hình Chờ Đối Soát */
+/* Giữ nền trắng cho khu vực chứa mã QR để camera điện thoại quét rõ nét */
+[data-bs-theme="dark"] .qr-display-card,
+[data-bs-theme="dark"] .vietqr-box,
+[data-bs-theme="dark"] .qr-image-wrapper {
+    background: #ffffff !important;
+    padding: 12px;
+    border-radius: 16px;
+    display: inline-block;
+}
+
+[data-bs-theme="dark"] #waiting-admin-box {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
+    border: 1.5px solid #059669 !important;
+    color: #f0fdf4 !important;
+}
+[data-bs-theme="dark"] #waiting-admin-box h4 {
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] #waiting-admin-box p {
+    color: #dcfce7 !important;
+}
+[data-bs-theme="dark"] #waiting-admin-box .alert-white {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+    color: #cbd5e1 !important;
+}
+
+/* 15. Widget Chatbot AI Tour Nổi Trong Dark Mode */
+[data-bs-theme="dark"] .ai-chat-drawer {
+    background-color: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-bs-theme="dark"] .ai-drawer-body {
+    background-color: #0b1329 !important;
+}
+
+[data-bs-theme="dark"] .ai-bubble-bot {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .ai-bubble-user {
+    background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .ai-drawer-footer {
+    background-color: #1e293b !important;
+    border-top: 1px solid #334155 !important;
+}
+
+/* 15.1. Trang AI Tour Toàn Màn Hình Trong Dark Mode */
+[data-bs-theme="dark"] .ai-trip-header,
+[data-bs-theme="dark"] .ai-chat-input-toolbar {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .ai-trip-wrapper,
+[data-bs-theme="dark"] .ai-chat-messages-container,
+[data-bs-theme="dark"] #aiMessagesArea {
+    background-color: #0b1329 !important;
+}
+
+[data-bs-theme="dark"] .ai-bubble-box.bg-white {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .ai-loc-card {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .ai-saved-tour-card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .ai-quick-prompt-chip {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+[data-bs-theme="dark"] .ai-quick-prompt-chip:hover {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+}
+
+/* 15.2. Huy Hiệu Thẻ Địa Điểm Danh Mục (Food & Travel Tags) */
+[data-bs-theme="dark"] .badge-tag-food {
+    background-color: rgba(234, 88, 12, 0.18) !important;
+    color: #fb923c !important;
+    border-color: rgba(234, 88, 12, 0.4) !important;
+}
+
+[data-bs-theme="dark"] .badge-tag-travel {
+    background-color: rgba(2, 132, 199, 0.18) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(2, 132, 199, 0.4) !important;
+}
+
+[data-bs-theme="dark"] .distance-pill {
+    background-color: rgba(2, 132, 199, 0.2) !important;
+    color: #38bdf8 !important;
+}
+
+/* 15.3. Các đường viền Subtle (Warning, Success, Danger) */
+[data-bs-theme="dark"] .border-warning-subtle {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+[data-bs-theme="dark"] .border-danger-subtle {
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+[data-bs-theme="dark"] .border-success-subtle {
+    border-color: rgba(34, 197, 94, 0.35) !important;
+}
+[data-bs-theme="dark"] .border-info-subtle {
+    border-color: rgba(14, 165, 233, 0.35) !important;
+}
+
+/* 15.4. Nav Pills & Tabs (Trang Cá Nhân & Bộ Lọc) */
+[data-bs-theme="dark"] .nav-pills .nav-link {
+    color: #94a3b8 !important;
+}
+[data-bs-theme="dark"] .nav-pills .nav-link:hover {
+    color: #38bdf8 !important;
+    background-color: rgba(56, 189, 248, 0.1) !important;
+}
+[data-bs-theme="dark"] .nav-pills .nav-link.active {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .nav-tabs {
+    border-bottom-color: #334155 !important;
+}
+[data-bs-theme="dark"] .nav-tabs .nav-link {
+    color: #94a3b8 !important;
+    border-color: transparent !important;
+}
+[data-bs-theme="dark"] .nav-tabs .nav-link:hover {
+    color: #38bdf8 !important;
+    border-color: #334155 #334155 transparent !important;
+}
+[data-bs-theme="dark"] .nav-tabs .nav-link.active {
+    background-color: #1e293b !important;
+    color: #38bdf8 !important;
+    border-color: #334155 #334155 #1e293b !important;
+}
+
+[data-bs-theme="dark"] .bg-primary-subtle {
+    background-color: rgba(2, 132, 199, 0.2) !important;
+    color: #e0f2fe !important;
+}
+[data-bs-theme="dark"] .bg-success-subtle {
+    background-color: rgba(22, 163, 74, 0.2) !important;
+    color: #dcfce7 !important;
+}
+[data-bs-theme="dark"] .bg-warning-subtle {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fef3c7 !important;
+}
+[data-bs-theme="dark"] .bg-danger-subtle {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: #fee2e2 !important;
+}
+
+/* 16. THIẾT KẾ NÚT DARK MODE (NAVBAR & FLOATING BUTTON) */
+/* Nút Navbar */
+.theme-toggle-nav-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+    outline: none;
+    white-space: nowrap;
+}
+
+.theme-toggle-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+[data-bs-theme="dark"] .theme-toggle-nav-btn {
+    background: rgba(14, 165, 233, 0.18);
+    border-color: rgba(14, 165, 233, 0.4);
+    color: #f8fafc;
+}
+
+/* Nút Floating (Nằm ngay cạnh nút Trợ lý AI Tour ở góc dưới phải) */
+.theme-floating-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #0b1f3a;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    flex-shrink: 0;
+}
+
+.theme-floating-btn:hover {
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 10px 24px rgba(2, 132, 199, 0.45) !important;
+    border-color: #38bdf8;
+}
+
+[data-bs-theme="dark"] .theme-floating-btn {
+    background: #1e293b;
+    border-color: #f59e0b;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* ========================================================
+   17. TÙY CHỈNH CHỐNG XUNG ĐỘT MÀU NỀN TUYỆT ĐỐI (ABSOLUTE BACKGROUND FIXES)
+   ======================================================== */
+
+/* Mục hoạt động trải nghiệm trang chủ */
+.agoda-activities-section {
+    background-color: #f8fafc;
+}
+[data-bs-theme="dark"] .agoda-activities-section {
+    background-color: #0b1329 !important;
+}
+
+/* Sóng biển trang trí */
+.guide-wave-svg {
+    fill: #f8fafc;
+}
+[data-bs-theme="dark"] .guide-wave-svg {
+    fill: #0b1329 !important;
+}
+
+/* Thanh tiến trình thanh toán */
+.checkout-progress-bar-bg {
+    background-color: #e2e8f0;
+}
+[data-bs-theme="dark"] .checkout-progress-bar-bg {
+    background-color: #334155 !important;
+}
+
+/* Khối đối soát chờ xác nhận & banner đếm ngược */
+.waiting-admin-card,
+.reservation-timer-banner {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1.5px solid #86efac !important;
+}
+[data-bs-theme="dark"] .waiting-admin-card,
+[data-bs-theme="dark"] .reservation-timer-banner {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
+    border: 1.5px solid #059669 !important;
+    color: #f0fdf4 !important;
+}
+[data-bs-theme="dark"] .waiting-admin-card h4,
+[data-bs-theme="dark"] .reservation-timer-banner #timer-title {
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .waiting-admin-card p,
+[data-bs-theme="dark"] .reservation-timer-banner #timer-sub {
+    color: #dcfce7 !important;
+}
+
+/* Category glass badge trên thẻ địa điểm */
+[data-bs-theme="dark"] .card-category-glass {
+    background: rgba(15, 23, 42, 0.88) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Mobile sticky booking bar trên trang chi tiết địa điểm */
+[data-bs-theme="dark"] #mobile-sticky-booking-bar {
+    background: rgba(15, 23, 42, 0.96) !important;
+    border-top: 1px solid #334155 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Bảng chỉ đường OSRM Route Navigation Panel */
+[data-bs-theme="dark"] .osrm-route-panel {
+    background: rgba(30, 41, 59, 0.96) !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5) !important;
+}
+[data-bs-theme="dark"] .osrm-step-item {
+    border-bottom-color: #334155 !important;
+    color: #f8fafc !important;
+}
+[data-bs-theme="dark"] .osrm-step-icon {
+    background: #0c4a6e !important;
+    color: #38bdf8 !important;
+}
+
+/* Tab điều hướng trang cá nhân Profile */
+[data-bs-theme="dark"] #profileTabs .nav-link:not(.active) {
+    color: #94a3b8 !important;
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+[data-bs-theme="dark"] #profileTabs .nav-link:not(.active):hover {
+    color: #f8fafc !important;
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+[data-bs-theme="dark"] #profileTabs .nav-link.active .bi,
+#profileTabs .nav-link.active .bi {
+    color: #ffffff !important;
+}
+
+/* Bảo toàn độ tương phản cho banner ưu đãi Agoda */
+.agoda-promo-banner .badge.bg-white,
+[data-bs-theme="dark"] .agoda-promo-banner .badge.bg-white {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
+.agoda-promo-banner .btn-light,
+[data-bs-theme="dark"] .agoda-promo-banner .btn-light {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #ffffff !important;
+}
+.agoda-promo-banner .btn-light:hover,
+[data-bs-theme="dark"] .agoda-promo-banner .btn-light:hover {
+    background-color: #f1f5f9 !important;
+    color: #0284c7 !important;
+    border-color: #f1f5f9 !important;
+}
+
+/* Đảm bảo vùng chứa mã VietQR và E-Voucher luôn là nền trắng tinh khiết để camera quét chuẩn */
+.qr-image-wrapper,
+[data-bs-theme="dark"] .qr-image-wrapper,
+.vietqr-box,
+[data-bs-theme="dark"] .vietqr-box,
+.qr-display-card,
+[data-bs-theme="dark"] .qr-display-card {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Badge trạng thái và chữ màu trong Dark Mode */
+[data-bs-theme="dark"] .badge.bg-warning,
+[data-bs-theme="dark"] .badge.bg-warning.text-dark {
+    background-color: #f59e0b !important;
+    color: #0f172a !important;
+}
+[data-bs-theme="dark"] .badge.bg-info,
+[data-bs-theme="dark"] .badge.bg-info.text-dark {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .bg-info-subtle {
+    background-color: rgba(14, 165, 233, 0.2) !important;
+    color: #7dd3fc !important;
+}
+
+/* Màu chữ nhấn mạnh trong chế độ tối */
+[data-bs-theme="dark"] .text-primary {
+    color: #38bdf8 !important;
+}
+[data-bs-theme="dark"] .text-success {
+    color: #4ade80 !important;
+}
+[data-bs-theme="dark"] .text-danger {
+    color: #f87171 !important;
+}
+[data-bs-theme="dark"] .text-warning {
+    color: #fbbf24 !important;
+}
+[data-bs-theme="dark"] .text-info {
+    color: #38bdf8 !important;
+}
+
+/* Avatar Bot trong bong bóng chat AI */
+[data-bs-theme="dark"] .ai-chat-bubble-row.ai-msg-bot .rounded-circle,
+[data-bs-theme="dark"] .ai-bot-avatar {
+    background: #0c4a6e !important;
+    color: #38bdf8 !important;
+}
+
+/* ========================================================
+   18. ĐỒNG BỘ DARK MODE CHO TRANG BẢN ĐỒ & ĐỊA ĐIỂM (/locations)
+   ======================================================== */
+
+/* Header khám phá địa điểm */
+[data-bs-theme="dark"] .locations-explorer-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-bs-theme="dark"] .locations-explorer-header .text-dark,
+[data-bs-theme="dark"] .locations-explorer-header h1,
+[data-bs-theme="dark"] .locations-explorer-header .breadcrumb-item.active {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .locations-explorer-header .breadcrumb-item a {
+    color: #38bdf8 !important;
+}
+
+/* Các nút chip lọc 1 chạm (Quick Filter Chips) */
+[data-bs-theme="dark"] .chip-btn {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .chip-btn:hover {
+    background-color: #334155 !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .chip-btn.active {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45) !important;
+}
+
+/* Nhóm nút đổi chế độ xem (Song song / Chỉ danh sách / Chỉ bản đồ) */
+[data-bs-theme="dark"] .view-mode-btn-group {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .view-mode-btn-group .btn-outline-secondary {
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .view-mode-btn-group .btn-outline-secondary:hover {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+}
+
+/* Thẻ địa điểm hiện đại (.location-card-modern) */
+[data-bs-theme="dark"] .location-card-modern {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-bs-theme="dark"] .location-card-modern:hover,
+[data-bs-theme="dark"] .location-card-modern.highlighted-card {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .location-card-title {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .location-card-modern:hover .location-card-title {
+    color: #38bdf8 !important;
+}
+
+[data-bs-theme="dark"] .location-card-address {
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .location-card-price {
+    color: #fb923c !important;
+}
+
+/* Khung bản đồ cố định & thanh điều khiển nổi trên bản đồ */
+[data-bs-theme="dark"] .sticky-map-wrapper {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .map-pill-badge {
+    background: rgba(15, 23, 42, 0.9) !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+
+/* Tối ưu hóa lớp gạch bản đồ Leaflet trong Dark Mode */
+[data-bs-theme="dark"] .leaflet-tile-pane {
+    filter: brightness(0.65) invert(1) contrast(3) hue-rotate(200deg) saturate(0.35) brightness(0.85);
+}
+
+/* Thanh bán kính GPS */
+[data-bs-theme="dark"] #radiusFilterBar {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* Khung bộ lọc nâng cao */
+[data-bs-theme="dark"] #advancedFilterCard .card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* ========================================================
+   19. ADMIN PANEL GALLERY IMAGE STYLES
+   ======================================================== */
+.gallery-item-wrap {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.gallery-item-wrap:hover {
+    transform: translateY(-2px);
+}
+
+
+
+
 

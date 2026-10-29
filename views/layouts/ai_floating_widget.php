@@ -3,7 +3,18 @@
      ======================================================== -->
 <?php $aiWidgetLoggedIn = !empty($_SESSION['user_id']); ?>
 
-<div id="aiTourWidget" class="ai-tour-widget-container">
+<div id="aiTourWidget" class="ai-tour-widget-container d-flex align-items-center gap-2">
+    <!-- Nút Dark Mode Nổi (Nằm ngay ngắn bên cạnh nút Trợ lý AI Tour) -->
+    <button type="button" 
+            id="themeToggleBtnFloating" 
+            class="theme-floating-btn shadow-lg" 
+            onclick="toggleTheme()" 
+            aria-label="Chuyển chế độ Giao diện Sáng / Tối" 
+            title="Chuyển chế độ Sáng / Tối (Dark Mode)">
+        <i class="bi bi-moon-stars-fill theme-float-icon-dark text-warning"></i>
+        <i class="bi bi-sun-fill theme-float-icon-light text-warning d-none"></i>
+    </button>
+
     <!-- Nút bấm nổi bật mở widget (Floating Action Button) -->
     <button type="button" 
             id="aiWidgetToggleBtn" 

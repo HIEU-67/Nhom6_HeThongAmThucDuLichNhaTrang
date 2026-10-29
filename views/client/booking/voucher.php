@@ -53,7 +53,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                                 $qrImgSrc = url(\App\Helpers\QrHelper::taoQrDonHang($donHang['ma_don_hang']));
                             }
                         ?>
-                        <div class="p-2 bg-white border rounded-3 shadow-sm d-inline-block">
+                        <div class="p-2 bg-white border rounded-3 shadow-sm d-inline-block qr-image-wrapper">
                             <img src="<?= $qrImgSrc ?>" 
                                  alt="Mã QR E-Voucher <?= htmlspecialchars($donHang['ma_don_hang']) ?>" 
                                  class="img-fluid" style="width: 180px; height: 180px; object-fit: contain;">

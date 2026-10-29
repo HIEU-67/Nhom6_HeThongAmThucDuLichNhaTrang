@@ -50,6 +50,14 @@ try {
         echo "[OK] Nạp thư viện ảnh thành công!\n";
     }
 
+    // 3.1. Đồng bộ các địa điểm mới nhất từ nhóm (nếu có)
+    $locationsSyncFile = __DIR__ . '/seeds/locations_sync.sql';
+    if (file_exists($locationsSyncFile)) {
+        echo "Đang đồng bộ dữ liệu địa điểm cập nhật từ nhóm (locations_sync.sql)...\n";
+        $pdo->exec(file_get_contents($locationsSyncFile));
+        echo "[OK] Đồng bộ địa điểm nhóm thành công!\n";
+    }
+
     // 4. Chạy toàn bộ Migrations tự động
     $migrationFiles = glob(__DIR__ . '/migrations/*.php');
     if (!empty($migrationFiles)) {

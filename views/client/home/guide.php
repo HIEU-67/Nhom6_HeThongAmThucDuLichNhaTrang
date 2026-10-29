@@ -43,7 +43,7 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
         </div>
         <!-- Sóng biển trang trí -->
         <div class="position-absolute bottom-0 start-0 end-0 overflow-hidden" style="height: 24px; pointer-events: none;">
-            <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style="width: 100%; height: 24px; fill: #f8fafc;">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="guide-wave-svg" style="width: 100%; height: 24px;">
                 <path d="M0,0 C150,90 350,-40 500,40 C650,120 900,20 1200,40 L1200,120 L0,120 Z"></path>
             </svg>
         </div>

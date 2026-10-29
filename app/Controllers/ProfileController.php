@@ -172,5 +172,34 @@ class ProfileController
 
         redirect(url('profile?tab=account'));
     }
+
+    /**
+     * Khách hàng xóa bài đánh giá từ trang cá nhân
+     */
+    public function deleteReview(): void
+    {
+        AuthMiddleware::checkCustomer();
+
+        if (!validate_csrf()) {
+            flash('error', 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.');
+            redirect(url('profile?tab=reviews'));
+            return;
+        }
+
+        $danhGiaId = (int)($_POST['danh_gia_id'] ?? 0);
+        $userId = (int)$_SESSION['user_id'];
+
+        if ($danhGiaId > 0) {
+            $danhGiaModel = new \App\Models\DanhGia();
+            $deleted = $danhGiaModel->xoaBoiNguoiDung($danhGiaId, $userId);
+            if ($deleted) {
+                flash('success', 'Đã xóa bài đánh giá của bạn thành công!');
+            } else {
+                flash('error', 'Không tìm thấy đánh giá hoặc bạn không có quyền xóa.');
+            }
+        }
+
+        redirect(url('profile?tab=reviews'));
+    }
 }
 

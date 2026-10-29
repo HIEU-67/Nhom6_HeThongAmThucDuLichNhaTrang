@@ -39,6 +39,19 @@
                         <span class="badge bg-warning text-dark rounded-pill ms-1 fw-bold" style="font-size: 9px; padding: 2px 6px;">AI</span>
                     </a>
                 </li>
+                <!-- Nút Chuyển Dark Mode (Nằm ngay ngắn bên cạnh nút Trợ lý AI Tour) -->
+                <li class="nav-item flex-shrink-0 ms-lg-1">
+                    <button type="button" 
+                            id="themeToggleBtnNavbar" 
+                            class="theme-toggle-nav-btn" 
+                            onclick="toggleTheme()" 
+                            aria-label="Chuyển chế độ Giao diện Sáng / Tối" 
+                            title="Chuyển chế độ Sáng / Tối (Dark Mode)">
+                        <i class="bi bi-moon-stars-fill theme-icon-dark text-warning"></i>
+                        <i class="bi bi-sun-fill theme-icon-light text-warning d-none"></i>
+                        <span class="theme-label-nav small fw-semibold">Tối</span>
+                    </button>
+                </li>
             </ul>
 
             <div class="d-flex align-items-center gap-2 flex-nowrap flex-shrink-0 ms-auto">

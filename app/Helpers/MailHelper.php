@@ -23,7 +23,22 @@ class MailHelper
             return false;
         }
 
-        $subject = "[Nha Trang Discovery] Xác nhận đặt vé thành công - Mã đơn #{$maDon}";
+        $isPaid = ($donHang['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan';
+        $isTaiQuay = ($donHang['phuong_thuc_thanh_toan'] ?? '') === 'tai_quay';
+
+        if ($isTaiQuay && !$isPaid) {
+            $subject = "[Nha Trang Discovery] Xác nhận đặt vé thành công (Thanh toán tại quầy) - Mã đơn #{$maDon}";
+            $loiChao = "Cảm ơn bạn đã lựa chọn Nha Trang Discovery. Đơn đặt vé của bạn đã được ghi nhận thành công với hình thức <strong>Thanh toán tiền mặt tại quầy</strong>. Bạn vui lòng xuất trình mã đơn hàng hoặc phiếu E-Voucher điện tử bên dưới tại quầy tiếp đón để thanh toán và nhận vé vào cổng.";
+            $trangThaiHtml = "<span style='color: #d97706; font-weight: 600; font-size: 13px;'>⏳ Chờ thanh toán tại quầy</span>";
+            $tongTienLabel = "Tổng tiền thanh toán tại quầy:";
+            $huongDan = "Khi tới điểm vui chơi / tham quan, bạn chỉ cần mở liên kết phiếu vé hoặc xuất trình mã đơn hàng cho nhân viên quầy tiếp đón để thanh toán tiền mặt và nhận vé vào cổng.<br>Mọi thắc mắc xin vui lòng liên hệ Hotline: <strong>1900 1234</strong> hoặc phản hồi email này.";
+        } else {
+            $subject = "[Nha Trang Discovery] Xác nhận đặt vé thành công - Mã đơn #{$maDon}";
+            $loiChao = "Cảm ơn bạn đã lựa chọn Nha Trang Discovery. Đơn đặt vé của bạn đã được thanh toán thành công và vé điện tử E-Voucher đã sẵn sàng sử dụng.";
+            $trangThaiHtml = "<span style='color: #10b981; font-weight: 600; font-size: 13px;'>✓ Đã thanh toán</span>";
+            $tongTienLabel = "Tổng tiền đã thanh toán:";
+            $huongDan = "Khi tới điểm vui chơi / tham quan, bạn chỉ cần mở liên kết trên và xuất trình mã QR trên điện thoại cho nhân viên soát vé.<br>Mọi thắc mắc xin vui lòng liên hệ Hotline: <strong>1900 1234</strong> hoặc phản hồi email này.";
+        }
 
         // Xây dựng danh sách vé HTML
         $itemsHtml = '';
@@ -71,7 +86,7 @@ class MailHelper
                     <!-- Nội dung chính -->
                     <div style='padding: 24px 28px;'>
                         <p style='font-size: 15px;'>Xin chào <strong>{$toName}</strong>,</p>
-                        <p style='font-size: 14px; color: #475569;'>Cảm ơn bạn đã lựa chọn Nha Trang Discovery. Đơn đặt vé của bạn đã được thanh toán thành công và vé điện tử E-Voucher đã sẵn sàng sử dụng.</p>
+                        <p style='font-size: 14px; color: #475569;'>{$loiChao}</p>
 
                         <!-- Thông tin đơn hàng -->
                         <div style='background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0;'>
@@ -85,10 +100,10 @@ class MailHelper
                             </div>
                             <div style='display: flex; justify-content: space-between; margin-bottom: 8px;'>
                                 <span style='color: #64748b; font-size: 13px;'>Trạng thái:</span>
-                                <span style='color: #10b981; font-weight: 600; font-size: 13px;'>✓ Đã thanh toán</span>
+                                {$trangThaiHtml}
                             </div>
                             <div style='display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px dashed #cbd5e1;'>
-                                <strong style='font-size: 14px;'>Tổng tiền thanh toán:</strong>
+                                <strong style='font-size: 14px;'>{$tongTienLabel}</strong>
                                 <strong style='color: #ea580c; font-size: 18px;'>{$tongTien}</strong>
                             </div>
                         </div>
@@ -104,8 +119,7 @@ class MailHelper
                         </div>
 
                         <p style='font-size: 13px; color: #64748b; text-align: center; margin-top: 24px; line-height: 1.5;'>
-                            Khi tới điểm vui chơi / tham quan, bạn chỉ cần mở liên kết trên và xuất trình mã QR trên điện thoại cho nhân viên soát vé.<br>
-                            Mọi thắc mắc xin vui lòng liên hệ Hotline: <strong>1900 1234</strong> hoặc phản hồi email này.
+                            {$huongDan}
                         </p>
                     </div>
 

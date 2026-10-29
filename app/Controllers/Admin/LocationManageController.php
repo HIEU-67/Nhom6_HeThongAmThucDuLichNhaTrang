@@ -210,6 +210,9 @@ class LocationManageController
 
         // Ảnh đại diện
         $anhDaiDien = $location['anh_dai_dien'];
+        if (!empty($_POST['xoa_anh_dai_dien']) && $_POST['xoa_anh_dai_dien'] === '1') {
+            $anhDaiDien = '';
+        }
         if (!empty($_FILES['anh_dai_dien']['name'])) {
             $uploaded = $this->uploadImage($_FILES['anh_dai_dien']);
             if ($uploaded) {
@@ -277,9 +280,15 @@ class LocationManageController
     {
         AuthMiddleware::checkAdmin();
 
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         $locationId = (int)($_POST['location_id'] ?? 0);
 
         if (!validate_csrf()) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.']);
+                exit;
+            }
             flash('error', 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.');
             redirect(url('admin/locations/edit/' . $locationId));
             return;
@@ -289,6 +298,11 @@ class LocationManageController
 
         if ($imageId > 0) {
             $this->diaDiemModel->xoaHinhAnh($imageId);
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Đã xóa ảnh thư viện thành công!']);
+                exit;
+            }
             flash('success', 'Đã xóa ảnh thư viện!');
         }
 

@@ -285,45 +285,123 @@ if ($hasTickets) {
                     </div>
                 <?php endif; ?>
 
-                <!-- Form Gửi Đánh Giá Mới -->
-                <div class="bg-light p-3 rounded-3 mb-4 border">
+                <!-- Form Gửi Đánh Giá Mới hoặc Cập Nhật -->
+                <?php
+                    $isEditingReview = !empty($myReview);
+                    $myRating = $isEditingReview ? (int)$myReview['so_sao'] : 5;
+                    $myContent = $isEditingReview ? $myReview['noi_dung'] : '';
+                    $existingPhotos = [];
+                    if ($isEditingReview && !empty($myReview['hinh_anh'])) {
+                        $decoded = json_decode($myReview['hinh_anh'], true);
+                        if (is_array($decoded)) {
+                            $existingPhotos = $decoded;
+                        } else {
+                            $existingPhotos = [$myReview['hinh_anh']];
+                        }
+                    }
+                ?>
+                <div class="bg-light p-3 rounded-3 mb-4 border" id="reviewFormCard">
                     <?php if (isset($_SESSION['user_id'])): ?>
-                        <form action="<?= url('dia-diem/danh-gia') ?>" method="POST" enctype="multipart/form-data">
+                        <form id="reviewSubmitForm" action="<?= url('dia-diem/danh-gia') ?>" method="POST" enctype="multipart/form-data" onsubmit="return validateReviewForm(event)">
                             <?= csrf_field() ?>
                             <input type="hidden" name="dia_diem_id" value="<?= (int)$diaDiem['id'] ?>">
                             <input type="hidden" name="slug" value="<?= htmlspecialchars($diaDiem['duong_dan']) ?>">
                             
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fw-semibold small text-dark">Gửi nhận xét của bạn:</span>
+                            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold small text-dark">
+                                        <?= $isEditingReview ? 'Chỉnh sửa nhận xét của bạn:' : 'Gửi nhận xét của bạn:' ?>
+                                    </span>
+                                    <?php if ($isEditingReview): ?>
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill small" style="font-size: 11px;">
+                                            <i class="bi bi-pencil-fill me-1"></i>Đang sửa đánh giá đã đăng
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
                                 
                                 <div class="star-rating-select">
-                                    <input type="radio" id="star5" name="so_sao" value="5" checked><label for="star5" title="5 sao"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" id="star4" name="so_sao" value="4"><label for="star4" title="4 sao"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" id="star3" name="so_sao" value="3"><label for="star3" title="3 sao"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" id="star2" name="so_sao" value="2"><label for="star2" title="2 sao"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" id="star1" name="so_sao" value="1"><label for="star1" title="1 sao"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="star5" name="so_sao" value="5" <?= ($myRating === 5) ? 'checked' : '' ?>><label for="star5" title="5 sao"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="star4" name="so_sao" value="4" <?= ($myRating === 4) ? 'checked' : '' ?>><label for="star4" title="4 sao"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="star3" name="so_sao" value="3" <?= ($myRating === 3) ? 'checked' : '' ?>><label for="star3" title="3 sao"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="star2" name="so_sao" value="2" <?= ($myRating === 2) ? 'checked' : '' ?>><label for="star2" title="2 sao"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" id="star1" name="so_sao" value="1" <?= ($myRating === 1) ? 'checked' : '' ?>><label for="star1" title="1 sao"><i class="bi bi-star-fill"></i></label>
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <textarea name="noi_dung" rows="3" class="form-control form-control-sm" placeholder="Chia sẻ cảm nhận về món ăn, dịch vụ hoặc trải nghiệm tham quan của bạn..." required></textarea>
+                                <textarea name="noi_dung" id="reviewContentArea" rows="3" class="form-control form-control-sm" placeholder="Chia sẻ cảm nhận về món ăn, dịch vụ hoặc trải nghiệm tham quan của bạn..." required><?= htmlspecialchars($myContent) ?></textarea>
                             </div>
 
-                            <!-- Đính kèm ảnh thực tế -->
+                            <!-- Khối hiển thị ảnh đã đăng trước đó (nếu có) + Nút xóa ảnh để chỉ giữ bình luận chữ -->
+                            <?php if (!empty($existingPhotos)): ?>
+                                <div class="mb-3 p-2 bg-white rounded-3 border" id="existingReviewPhotosBox">
+                                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-1">
+                                        <span class="small fw-semibold text-muted">
+                                            <i class="bi bi-images me-1 text-primary"></i>Ảnh đã đính kèm trước đó (<?= count($existingPhotos) ?> ảnh):
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill" style="font-size: 11.5px;" id="btnToggleXoaAnh" onclick="toggleXoaAnhDanhGia()">
+                                            <i class="bi bi-trash3 me-1"></i>Xóa toàn bộ ảnh này (chỉ giữ bình luận chữ)
+                                        </button>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap" id="existingReviewPhotosList">
+                                        <?php foreach ($existingPhotos as $ep): ?>
+                                            <img src="<?= url(htmlspecialchars($ep)) ?>" class="rounded-3 border object-fit-cover shadow-2xs existing-photo-thumb" style="width: 70px; height: 70px; transition: all 0.3s ease;">
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div id="xoaAnhNotice" class="text-danger small mt-1.5 d-none fw-semibold">
+                                        <i class="bi bi-exclamation-circle-fill me-1"></i>Ảnh sẽ bị gỡ bỏ vĩnh viễn khỏi đánh giá khi bạn bấm "Cập nhật đánh giá".
+                                    </div>
+                                    <input type="hidden" name="xoa_anh" id="inputXoaAnhDanhGia" value="0">
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Đính kèm ảnh mới -->
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold text-muted d-flex align-items-center justify-content-between mb-1">
-                                    <span><i class="bi bi-camera me-1 text-primary"></i>Đính kèm hình ảnh thực tế (tối đa 3 ảnh):</span>
-                                    <span class="small text-secondary" style="font-size: 11px;">JPG, PNG, WEBP (tối đa 5MB)</span>
+                                <label class="form-label small fw-semibold text-muted d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
+                                    <span>
+                                        <i class="bi bi-camera me-1 text-primary"></i>
+                                        <?= !empty($existingPhotos) ? 'Hoặc chọn ảnh mới thay thế (tối đa 3 ảnh):' : 'Đính kèm hình ảnh thực tế (tối đa 3 ảnh):' ?>
+                                    </span>
+                                    <span class="small text-secondary" style="font-size: 11px;">Tối đa 3 ảnh &bull; Mỗi ảnh &le; 5MB (JPG, PNG, WEBP)</span>
                                 </label>
-                                <input type="file" name="hinh_anh[]" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp,image/gif" multiple id="reviewPhotoInput">
+                                <input type="file" name="hinh_anh[]" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp,image/gif" multiple id="reviewPhotoInput" onchange="handleReviewPhotosSelect(this)">
+                                
+                                <!-- Preview container cho ảnh vừa chọn -->
+                                <div id="newReviewPhotosPreviewBox" class="mt-2 p-2 bg-white rounded-3 border d-none">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="small fw-semibold text-primary" style="font-size: 11.5px;">
+                                            <i class="bi bi-check2-circle me-1"></i>Ảnh vừa chọn (<span id="newReviewPhotosCount">0</span>/3 ảnh):
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 11.5px;" onclick="clearReviewPhotoInput()">
+                                            <i class="bi bi-x-circle me-1"></i>Hủy chọn tất cả
+                                        </button>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap" id="newReviewPhotosPreviewList"></div>
+                                </div>
                             </div>
 
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-coastal btn-sm rounded-pill px-4 shadow-sm">
-                                    <i class="bi bi-send me-1"></i>Gửi đánh giá
+                            <div class="d-flex align-items-center justify-content-between pt-1 flex-wrap gap-2">
+                                <div>
+                                    <?php if ($isEditingReview): ?>
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-xs" onclick="confirmDeleteMyReview()">
+                                            <i class="bi bi-trash3 me-1"></i>Xóa bài đánh giá này
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                                <button type="submit" class="btn btn-coastal btn-sm rounded-pill px-4 shadow-sm fw-semibold">
+                                    <i class="bi <?= $isEditingReview ? 'bi-check-circle' : 'bi-send' ?> me-1"></i>
+                                    <?= $isEditingReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá' ?>
                                 </button>
                             </div>
                         </form>
+
+                        <?php if ($isEditingReview): ?>
+                            <form id="deleteMyReviewForm" action="<?= url('dia-diem/xoa-danh-gia') ?>" method="POST" class="d-none">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="danh_gia_id" value="<?= (int)$myReview['id'] ?>">
+                                <input type="hidden" name="slug" value="<?= htmlspecialchars($diaDiem['duong_dan']) ?>">
+                            </form>
+                        <?php endif; ?>
                     <?php else: ?>
                         <div class="text-center py-2">
                             <p class="text-muted small mb-2">Đăng nhập tài khoản để chia sẻ nhận xét và xếp hạng sao cho địa điểm này.</p>
@@ -391,6 +469,11 @@ if ($hasTickets) {
                                         <strong class="text-dark small">
                                             <i class="bi bi-person-circle me-1 text-primary"></i><?= htmlspecialchars($dg['ho_ten']) ?>
                                         </strong>
+                                        <?php if (isset($_SESSION['user_id']) && (int)$dg['nguoi_dung_id'] === (int)$_SESSION['user_id']): ?>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 10px;">
+                                                <i class="bi bi-person-check-fill me-1"></i>Đánh giá của bạn
+                                            </span>
+                                        <?php endif; ?>
                                         <?php if (!empty($dg['da_mua_ve'])): ?>
                                             <!-- Verified Buyer Badge (Đánh Giá Minh Bạch) -->
                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 11px;">
@@ -398,7 +481,24 @@ if ($hasTickets) {
                                             </span>
                                         <?php endif; ?>
                                     </div>
-                                    <span class="small text-muted"><?= \App\Helpers\FormatHelper::ngayThang($dg['ngay_tao']) ?></span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small text-muted"><?= \App\Helpers\FormatHelper::ngayThang($dg['ngay_tao']) ?></span>
+                                        <?php if (isset($_SESSION['user_id']) && (int)$dg['nguoi_dung_id'] === (int)$_SESSION['user_id']): ?>
+                                            <div class="d-flex align-items-center gap-1 ms-1">
+                                                <a href="#reviewSection" class="btn btn-outline-secondary btn-sm py-0 px-2 rounded-pill" style="font-size: 11px;" title="Chỉnh sửa đánh giá này">
+                                                    <i class="bi bi-pencil-square me-1"></i>Sửa
+                                                </a>
+                                                <form action="<?= url('dia-diem/xoa-danh-gia') ?>" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài đánh giá này?');">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="danh_gia_id" value="<?= (int)$dg['id'] ?>">
+                                                    <input type="hidden" name="slug" value="<?= htmlspecialchars($diaDiem['duong_dan']) ?>">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2 rounded-pill" style="font-size: 11px;" title="Xóa đánh giá này">
+                                                        <i class="bi bi-trash3 me-1"></i>Xóa
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 <div class="mb-2"><?= \App\Helpers\FormatHelper::saoHtml((int)$dg['so_sao']) ?></div>
                                 <p class="text-secondary small mb-2"><?= nl2br(htmlspecialchars($dg['noi_dung'])) ?></p>
@@ -581,6 +681,141 @@ if ($hasTickets) {
                 // Khởi tạo hiển thị trang đầu tiên
                 renderPage();
             });
+
+            // 1. Quản lý danh sách ảnh đính kèm đánh giá (Giới hạn tối đa 3 ảnh & <= 5MB)
+            let reviewSelectedFiles = [];
+
+            function handleReviewPhotosSelect(input) {
+                if (!input.files || input.files.length === 0) return;
+
+                const files = Array.from(input.files);
+
+                // Kiểm tra giới hạn tối đa 3 ảnh
+                if (files.length > 3) {
+                    alert('⚠️ QUÁ SỐ LƯỢNG ẢNH CHO PHÉP!\nBạn chỉ được đính kèm tối đa 3 hình ảnh cho mỗi đánh giá.\nVui lòng chọn lại tối đa 3 ảnh.');
+                    input.value = '';
+                    clearReviewPhotoInput();
+                    return;
+                }
+
+                // Kiểm tra dung lượng từng ảnh <= 5MB
+                const MAX_BYTES = 5 * 1024 * 1024;
+                for (let f of files) {
+                    if (f.size > MAX_BYTES) {
+                        const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+                        alert(`⚠️ DUNG LƯỢNG ẢNH QUÁ LỚN!\nFile "${f.name}" có dung lượng ${sizeMb}MB vượt quá giới hạn 5MB cho phép.\nVui lòng chọn ảnh nhẹ hơn.`);
+                        input.value = '';
+                        clearReviewPhotoInput();
+                        return;
+                    }
+                }
+
+                reviewSelectedFiles = files;
+                renderReviewPhotoPreviews();
+            }
+
+            function renderReviewPhotoPreviews() {
+                const previewBox = document.getElementById('newReviewPhotosPreviewBox');
+                const previewList = document.getElementById('newReviewPhotosPreviewList');
+                const countSpan = document.getElementById('newReviewPhotosCount');
+                if (!previewBox || !previewList) return;
+
+                if (reviewSelectedFiles.length === 0) {
+                    previewBox.classList.add('d-none');
+                    previewList.innerHTML = '';
+                    return;
+                }
+
+                countSpan.textContent = reviewSelectedFiles.length;
+                previewBox.classList.remove('d-none');
+                previewList.innerHTML = '';
+
+                reviewSelectedFiles.forEach((file, index) => {
+                    const url = URL.createObjectURL(file);
+                    const wrap = document.createElement('div');
+                    wrap.className = 'position-relative';
+                    wrap.innerHTML = `
+                        <img src="${url}" class="rounded-3 border object-fit-cover shadow-2xs" style="width: 70px; height: 70px;">
+                        <button type="button" 
+                                class="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 m-1 p-0 d-flex align-items-center justify-content-center shadow" 
+                                style="width: 22px; height: 22px; font-size: 10px; z-index: 5;"
+                                onclick="removeSingleReviewPhoto(${index})" 
+                                title="Xóa ảnh này">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    `;
+                    previewList.appendChild(wrap);
+                });
+            }
+
+            function removeSingleReviewPhoto(index) {
+                if (index >= 0 && index < reviewSelectedFiles.length) {
+                    reviewSelectedFiles.splice(index, 1);
+                    syncReviewPhotosInput();
+                }
+            }
+
+            function syncReviewPhotosInput() {
+                const input = document.getElementById('reviewPhotoInput');
+                const dt = new DataTransfer();
+                reviewSelectedFiles.forEach(f => dt.items.add(f));
+                input.files = dt.files;
+                renderReviewPhotoPreviews();
+            }
+
+            function clearReviewPhotoInput() {
+                const input = document.getElementById('reviewPhotoInput');
+                if (input) input.value = '';
+                reviewSelectedFiles = [];
+                renderReviewPhotoPreviews();
+            }
+
+            function validateReviewForm(e) {
+                if (reviewSelectedFiles.length > 3) {
+                    alert('⚠️ Bạn chỉ được đính kèm tối đa 3 ảnh cho mỗi đánh giá.');
+                    e.preventDefault();
+                    return false;
+                }
+                return true;
+            }
+
+            // 2. Bật/Tắt xóa toàn bộ ảnh cũ đã đăng trước đó
+            let isXoaAnhActive = false;
+            function toggleXoaAnhDanhGia() {
+                const input = document.getElementById('inputXoaAnhDanhGia');
+                const btn = document.getElementById('btnToggleXoaAnh');
+                const notice = document.getElementById('xoaAnhNotice');
+                const thumbs = document.querySelectorAll('.existing-photo-thumb');
+
+                isXoaAnhActive = !isXoaAnhActive;
+                if (isXoaAnhActive) {
+                    input.value = '1';
+                    btn.className = 'btn btn-sm btn-secondary py-0 px-2 rounded-pill';
+                    btn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i>Hủy xóa ảnh';
+                    if (notice) notice.classList.remove('d-none');
+                    thumbs.forEach(t => {
+                        t.style.opacity = '0.3';
+                        t.style.filter = 'grayscale(100%)';
+                    });
+                } else {
+                    input.value = '0';
+                    btn.className = 'btn btn-sm btn-outline-danger py-0 px-2 rounded-pill';
+                    btn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Xóa toàn bộ ảnh này (chỉ giữ bình luận chữ)';
+                    if (notice) notice.classList.add('d-none');
+                    thumbs.forEach(t => {
+                        t.style.opacity = '1';
+                        t.style.filter = 'none';
+                    });
+                }
+            }
+
+            // 3. Xác nhận xóa đánh giá tại trang chi tiết
+            function confirmDeleteMyReview() {
+                if (confirm('Bạn có chắc chắn muốn xóa bài đánh giá này không? Đánh giá và các hình ảnh đính kèm sẽ bị gỡ bỏ vĩnh viễn.')) {
+                    const form = document.getElementById('deleteMyReviewForm');
+                    if (form) form.submit();
+                }
+            }
             </script>
 
             <!-- 4. ĐỊA ĐIỂM TƯƠNG TỰ CÙNG CHỦ ĐỀ -->

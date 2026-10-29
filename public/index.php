@@ -37,6 +37,7 @@ Router::post('/api/ai/save-tour', [AiTourController::class, 'apiSaveTour']);
 Router::post('/api/ai/delete-tour', [AiTourController::class, 'apiDeleteSavedTour']);
 Router::get('/dia-diem/{slug}', [LocationController::class, 'detail']);
 Router::post('/dia-diem/danh-gia', [LocationController::class, 'submitReview']);
+Router::post('/dia-diem/xoa-danh-gia', [LocationController::class, 'deleteReview']);
 Router::get('/api/locations', [LocationController::class, 'apiLocations']);
 Router::get('/api/search-suggest', [LocationController::class, 'searchSuggest']);
 Router::post('/api/favorites/toggle', [LocationController::class, 'toggleFavorite']);
@@ -68,6 +69,7 @@ Router::get('/voucher/{code}', [BookingController::class, 'showVoucher']);
 Router::get('/profile', [ProfileController::class, 'index']);
 Router::post('/profile/update', [ProfileController::class, 'updateProfile']);
 Router::post('/profile/change-password', [ProfileController::class, 'changePassword']);
+Router::post('/profile/danh-gia/xoa', [ProfileController::class, 'deleteReview']);
 
 // ==========================================
 // 4. ROUTE ADMIN PORTAL
@@ -76,6 +78,7 @@ Router::get('/admin/dashboard', [DashboardController::class, 'index']);
 Router::get('/admin/guide', [DashboardController::class, 'guide']);
 Router::get('/admin/orders', [OrderManageController::class, 'index']);
 Router::post('/admin/orders/update-status', [OrderManageController::class, 'updateStatusAction']);
+Router::post('/admin/orders/confirm-payment', [OrderManageController::class, 'confirmPaymentAction']);
 
 // Quản lý địa điểm
 Router::get('/admin/locations', [LocationManageController::class, 'index']);

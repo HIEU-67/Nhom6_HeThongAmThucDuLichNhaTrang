@@ -22,9 +22,7 @@ scratch/
 cloudflared.exe
 .agent/
 
-# Uploaded Files (keep folder structure)
-public/uploads/locations/*
-!public/uploads/locations/.gitkeep
+# Uploaded Files (QR Codes & Temporary Logs)
 public/uploads/qrcodes/*
 !public/uploads/qrcodes/.gitkeep
 public/uploads/*.txt

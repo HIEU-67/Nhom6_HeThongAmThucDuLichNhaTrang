@@ -85,11 +85,18 @@ class LocationController
             $isFavorite = $this->yeuThichModel->kiemTra((int)$_SESSION['user_id'], (int)$diaDiem['id']);
         }
 
+        // Lấy đánh giá của chính người dùng hiện tại (nếu đã đăng nhập)
+        $myReview = null;
+        if (!empty($_SESSION['user_id'])) {
+            $myReview = $this->danhGiaModel->layCuaToiTheoDiaDiem((int)$_SESSION['user_id'], (int)$diaDiem['id']);
+        }
+
         view('client.locations.detail', [
             'title'             => $diaDiem['ten_dia_diem'] . ' - Nha Trang',
             'diaDiem'           => $diaDiem,
             'goiVeList'         => $goiVeList,
             'danhGiaList'       => $danhGiaList,
+            'myReview'          => $myReview,
             'gallery'           => $gallery,
             'diaDiemLienQuan'   => $diaDiemLienQuan,
             'isFavorite'        => $isFavorite,
@@ -122,7 +129,7 @@ class LocationController
     }
 
     /**
-     * Xử lý gửi đánh giá cộng đồng cho địa điểm
+     * Xử lý gửi/cập nhật đánh giá cộng đồng cho địa điểm
      */
     public function submitReview(): void
     {
@@ -132,7 +139,7 @@ class LocationController
 
         if (!validate_csrf()) {
             flash('error', 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.');
-            redirect(url('dia-diem/' . $slug));
+            redirect(url('dia-diem/' . $slug . '#reviewSection'));
             return;
         }
 
@@ -142,22 +149,45 @@ class LocationController
 
         if ($diaDiemId <= 0 || empty($noiDung)) {
             flash('error', 'Vui lòng nhập nội dung đánh giá.');
-            redirect(url('dia-diem/' . $slug));
+            redirect(url('dia-diem/' . $slug . '#reviewSection'));
+            return;
         }
 
         $soSao = max(1, min(5, $soSao));
         $nguoiDungId = (int)$_SESSION['user_id'];
+        $existingReview = $this->danhGiaModel->layCuaToiTheoDiaDiem($nguoiDungId, $diaDiemId);
 
-        // Xử lý upload ảnh đánh giá đa phương tiện (tối đa 3 ảnh)
+        // Kiểm tra số lượng ảnh tải lên (nếu có)
         $uploadedPhotos = [];
         if (!empty($_FILES['hinh_anh']['name'][0])) {
+            $rawFiles = array_values(array_filter($_FILES['hinh_anh']['name']));
+            $rawCount = count($rawFiles);
+
+            if ($rawCount > 3) {
+                flash('error', 'Bạn chỉ được đính kèm tối đa 3 hình ảnh cho mỗi đánh giá. Vui lòng chọn lại tối đa 3 ảnh.');
+                redirect(url('dia-diem/' . $slug . '#reviewSection'));
+                return;
+            }
+
+            // Kiểm tra dung lượng từng ảnh <= 5MB
+            $maxBytes = 5 * 1024 * 1024;
+            for ($i = 0; $i < $rawCount; $i++) {
+                if ($_FILES['hinh_anh']['error'][$i] === UPLOAD_ERR_OK && $_FILES['hinh_anh']['size'][$i] > $maxBytes) {
+                    $fileName = htmlspecialchars($_FILES['hinh_anh']['name'][$i]);
+                    $fileSizeMb = round($_FILES['hinh_anh']['size'][$i] / (1024 * 1024), 1);
+                    flash('error', "Ảnh '{$fileName}' có dung lượng {$fileSizeMb}MB vượt quá giới hạn 5MB cho phép. Vui lòng chọn ảnh nhẹ hơn.");
+                    redirect(url('dia-diem/' . $slug . '#reviewSection'));
+                    return;
+                }
+            }
+
             $uploadDir = dirname(__DIR__, 2) . '/public/uploads/reviews';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
 
             $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            $fileCount = min(3, count($_FILES['hinh_anh']['name']));
+            $fileCount = min(3, $rawCount);
 
             for ($i = 0; $i < $fileCount; $i++) {
                 if ($_FILES['hinh_anh']['error'][$i] === UPLOAD_ERR_OK) {
@@ -165,7 +195,7 @@ class LocationController
                     $fileSize = $_FILES['hinh_anh']['size'][$i];
                     $mime = mime_content_type($tmpName);
 
-                    if (in_array($mime, $allowedMimes) && $fileSize <= 5 * 1024 * 1024) {
+                    if (in_array($mime, $allowedMimes) && $fileSize <= $maxBytes) {
                         $ext = pathinfo($_FILES['hinh_anh']['name'][$i], PATHINFO_EXTENSION);
                         $fileName = 'rev_' . $nguoiDungId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($ext);
                         $targetPath = $uploadDir . '/' . $fileName;
@@ -178,16 +208,82 @@ class LocationController
             }
         }
 
-        $hinhAnhJson = !empty($uploadedPhotos) ? json_encode($uploadedPhotos, JSON_UNESCAPED_SLASHES) : null;
+        // Xử lý logic xóa ảnh cũ hoặc cập nhật ảnh mới
+        $xoaAnh = !empty($_POST['xoa_anh']) && $_POST['xoa_anh'] === '1';
+        $hinhAnhJson = null;
+
+        if (!empty($uploadedPhotos)) {
+            // Có upload ảnh mới -> dùng ảnh mới và dọn dẹp file ảnh cũ nếu có
+            $hinhAnhJson = json_encode($uploadedPhotos, JSON_UNESCAPED_SLASHES);
+            if ($existingReview && !empty($existingReview['hinh_anh'])) {
+                $this->unlinkOldReviewPhotos($existingReview['hinh_anh']);
+            }
+        } elseif ($xoaAnh) {
+            // Khách hàng bấm xóa ảnh -> xóa sạch ảnh cũ và đặt về null (chỉ để lại bình luận chữ)
+            $hinhAnhJson = null;
+            if ($existingReview && !empty($existingReview['hinh_anh'])) {
+                $this->unlinkOldReviewPhotos($existingReview['hinh_anh']);
+            }
+        } elseif ($existingReview && !empty($existingReview['hinh_anh'])) {
+            // Giữ nguyên ảnh đã có trước đó
+            $hinhAnhJson = $existingReview['hinh_anh'];
+        }
 
         $thanhCong = $this->danhGiaModel->themMoi($nguoiDungId, $diaDiemId, $soSao, $noiDung, $hinhAnhJson);
         if ($thanhCong) {
-            flash('success', 'Cảm ơn bạn đã gửi đánh giá trải nghiệm kèm hình ảnh!');
+            flash('success', $existingReview ? 'Đã cập nhật đánh giá của bạn thành công!' : 'Cảm ơn bạn đã gửi đánh giá trải nghiệm!');
         } else {
             flash('error', 'Có lỗi xảy ra khi lưu đánh giá. Vui lòng thử lại.');
         }
 
-        redirect(url('dia-diem/' . $slug));
+        redirect(url('dia-diem/' . $slug . '#reviewSection'));
+    }
+
+    /**
+     * Khách hàng tự xóa đánh giá của chính mình từ trang chi tiết địa điểm
+     */
+    public function deleteReview(): void
+    {
+        AuthMiddleware::checkCustomer();
+
+        $slug = trim($_POST['slug'] ?? '');
+
+        if (!validate_csrf()) {
+            flash('error', 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.');
+            redirect(url('dia-diem/' . $slug . '#reviewSection'));
+            return;
+        }
+
+        $danhGiaId = (int)($_POST['danh_gia_id'] ?? 0);
+        $userId = (int)$_SESSION['user_id'];
+
+        if ($danhGiaId > 0) {
+            $deleted = $this->danhGiaModel->xoaBoiNguoiDung($danhGiaId, $userId);
+            if ($deleted) {
+                flash('success', 'Đã xóa bài đánh giá của bạn thành công!');
+            } else {
+                flash('error', 'Không tìm thấy bài đánh giá hoặc bạn không có quyền xóa.');
+            }
+        }
+
+        redirect(url('dia-diem/' . $slug . '#reviewSection'));
+    }
+
+    /**
+     * Xóa các file ảnh đánh giá cũ khỏi thư mục public/uploads/reviews
+     */
+    private function unlinkOldReviewPhotos(string $hinhAnhJson): void
+    {
+        $photos = json_decode($hinhAnhJson, true);
+        if (is_array($photos)) {
+            $baseDir = dirname(__DIR__, 2) . '/public/';
+            foreach ($photos as $p) {
+                $fullPath = $baseDir . $p;
+                if (file_exists($fullPath) && is_file($fullPath)) {
+                    @unlink($fullPath);
+                }
+            }
+        }
     }
 
     /**

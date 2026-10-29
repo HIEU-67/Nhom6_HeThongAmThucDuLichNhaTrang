@@ -88,6 +88,65 @@ class OrderManageController
         }
 
         $db = Database::getConnection();
+
+        // 1. Kiểm tra đơn hàng tồn tại
+        $stmtCheck = $db->prepare("SELECT * FROM don_hang WHERE id = :id AND ngay_xoa IS NULL");
+        $stmtCheck->execute(['id' => $donHangId]);
+        $order = $stmtCheck->fetch();
+
+        if (!$order) {
+            throw new Exception("Không tìm thấy đơn hàng cần cập nhật.");
+        }
+
+        // 2. NGHIỆP VỤ BẢO VỆ: Nếu là đổi vé vào cổng (hoàn thành)
+        if ($trangThaiMoi === 'hoan_thanh') {
+            // Đối với đơn hàng thanh toán online (chuyển khoản, vnpay, momo): BẮT BUỘC phải thanh toán trước
+            if ($order['phuong_thuc_thanh_toan'] !== 'tai_quay' && $order['trang_thai_thanh_toan'] !== 'da_thanh_toan') {
+                throw new Exception("Không thể đổi vé! Đơn hàng trực tuyến #" . $order['ma_don_hang'] . " chưa được thanh toán. Vui lòng bấm 'Xác nhận đã nhận tiền' trước.");
+            }
+
+            // Đối với đơn hàng thanh toán tại quầy: Khi Admin bấm Đổi vé (thu tiền mặt), tự động cập nhật luôn trạng thái thanh toán sang 'da_thanh_toan'
+            if ($order['phuong_thuc_thanh_toan'] === 'tai_quay' && $order['trang_thai_thanh_toan'] !== 'da_thanh_toan') {
+                $db->beginTransaction();
+                try {
+                    $stmtUpdate = $db->prepare("
+                        UPDATE don_hang 
+                        SET trang_thai_don_hang = 'hoan_thanh',
+                            trang_thai_thanh_toan = 'da_thanh_toan' 
+                        WHERE id = :id AND ngay_xoa IS NULL
+                    ");
+                    $stmtUpdate->execute(['id' => $donHangId]);
+
+                    // Ghi nhận giao dịch thanh toán tiền mặt tại quầy
+                    $maGd = 'CASH' . date('YmdHis') . rand(100, 999);
+                    $stmtTx = $db->prepare("
+                        INSERT INTO giao_dich_thanh_toan 
+                        (don_hang_id, cong_thanh_toan, ma_giao_dich, so_tien, loai_tien_te, du_lieu_phan_hoi, trang_thai) 
+                        VALUES 
+                        (:don_hang_id, 'tai_quay', :ma_gd, :so_tien, 'VND', :phan_hoi, 'thanh_cong')
+                    ");
+                    $stmtTx->execute([
+                        'don_hang_id' => $donHangId,
+                        'ma_gd'       => $maGd,
+                        'so_tien'     => $order['tong_tien'],
+                        'phan_hoi'    => json_encode([
+                            'hinh_thuc' => 'Thanh toán tiền mặt tại quầy soát vé',
+                            'thoi_gian' => date('Y-m-d H:i:s'),
+                            'admin_id'  => $_SESSION['user_id'] ?? 0
+                        ], JSON_UNESCAPED_UNICODE)
+                    ]);
+
+                    $db->commit();
+                    return true;
+                } catch (Exception $e) {
+                    if ($db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                    throw $e;
+                }
+            }
+        }
+
         $stmt = $db->prepare("
             UPDATE don_hang 
             SET trang_thai_don_hang = :trang_thai 
@@ -117,6 +176,109 @@ class OrderManageController
             flash('success', 'Đã cập nhật trạng thái đơn hàng thành công!');
         } catch (Exception $e) {
             flash('error', 'Lỗi: ' . $e->getMessage());
+        }
+
+        redirect(url('admin/orders'));
+    }
+
+    /**
+     * Xác nhận đã nhận tiền chuyển khoản / thanh toán online cho đơn hàng từ phía Quản trị viên
+     */
+    public function confirmPaymentAction(): void
+    {
+        AuthMiddleware::checkAdmin();
+
+        if (!validate_csrf()) {
+            flash('error', 'Phiên làm việc hết hạn hoặc yêu cầu không hợp lệ.');
+            redirect(url('admin/orders'));
+            return;
+        }
+
+        $donHangId = (int)($_POST['don_hang_id'] ?? 0);
+        if ($donHangId <= 0) {
+            flash('error', 'Mã đơn hàng không hợp lệ.');
+            redirect(url('admin/orders'));
+            return;
+        }
+
+        $db = Database::getConnection();
+        $stmtCheck = $db->prepare("SELECT * FROM don_hang WHERE id = :id AND ngay_xoa IS NULL");
+        $stmtCheck->execute(['id' => $donHangId]);
+        $order = $stmtCheck->fetch();
+
+        if (!$order) {
+            flash('error', 'Không tìm thấy đơn hàng cần xác nhận thanh toán.');
+            redirect(url('admin/orders'));
+            return;
+        }
+
+        if ($order['trang_thai_don_hang'] === 'da_huy') {
+            flash('error', 'Không thể xác nhận thanh toán cho đơn hàng đã bị hủy.');
+            redirect(url('admin/orders'));
+            return;
+        }
+
+        if ($order['trang_thai_thanh_toan'] === 'da_thanh_toan') {
+            flash('warning', 'Đơn hàng #' . $order['ma_don_hang'] . ' đã được thanh toán từ trước.');
+            redirect(url('admin/orders'));
+            return;
+        }
+
+        try {
+            $db->beginTransaction();
+
+            // Cập nhật trạng thái thanh toán sang da_thanh_toan, trạng thái đơn sang da_xac_nhan nếu đang là moi_tao hoặc cho_xac_nhan
+            $trangThaiDonMoi = in_array($order['trang_thai_don_hang'], ['moi_tao', 'cho_xac_nhan']) ? 'da_xac_nhan' : $order['trang_thai_don_hang'];
+            $stmtUpdate = $db->prepare("
+                UPDATE don_hang 
+                SET trang_thai_thanh_toan = 'da_thanh_toan',
+                    trang_thai_don_hang = :trang_thai_don 
+                WHERE id = :id
+            ");
+            $stmtUpdate->execute([
+                'trang_thai_don' => $trangThaiDonMoi,
+                'id'             => $donHangId
+            ]);
+
+            // Thêm bản ghi giao dịch thanh toán
+            $maGiaoDich = 'ADM' . date('YmdHis') . rand(100, 999);
+            $stmtTx = $db->prepare("
+                INSERT INTO giao_dich_thanh_toan 
+                (don_hang_id, cong_thanh_toan, ma_giao_dich, so_tien, loai_tien_te, du_lieu_phan_hoi, trang_thai) 
+                VALUES 
+                (:don_hang_id, :cong, :ma_gd, :so_tien, 'VND', :phan_hoi, 'thanh_cong')
+            ");
+            $stmtTx->execute([
+                'don_hang_id' => $donHangId,
+                'cong'        => $order['phuong_thuc_thanh_toan'],
+                'ma_gd'       => $maGiaoDich,
+                'so_tien'     => $order['tong_tien'],
+                'phan_hoi'    => json_encode([
+                    'hinh_thuc'       => 'Admin quầy tiếp đón đối soát & xác nhận nhận tiền',
+                    'thoi_gian'       => date('Y-m-d H:i:s'),
+                    'nguoi_duyet_id'  => $_SESSION['user_id'] ?? 0,
+                    'nguoi_duyet_ten' => $_SESSION['user_name'] ?? 'Admin'
+                ], JSON_UNESCAPED_UNICODE)
+            ]);
+
+            $db->commit();
+
+            // Đảm bảo mã QR E-Voucher đã được tạo
+            \App\Helpers\QrHelper::taoQrDonHang($order['ma_don_hang']);
+
+            // Gửi email xác nhận thanh toán kèm vé điện tử cho khách
+            $donHangModel = new \App\Models\DonHang();
+            $chiTiet = $donHangModel->chiTiet($donHangId);
+            $order['trang_thai_thanh_toan'] = 'da_thanh_toan';
+            $order['trang_thai_don_hang'] = $trangThaiDonMoi;
+            \App\Helpers\MailHelper::guiEmailXacNhan($order, $chiTiet);
+
+            flash('success', 'Xác nhận thanh toán thành công cho đơn hàng #' . $order['ma_don_hang'] . '! Hệ thống đã kích hoạt E-Voucher và gửi email vé cho khách.');
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            flash('error', 'Lỗi khi xác nhận thanh toán: ' . $e->getMessage());
         }
 
         redirect(url('admin/orders'));
