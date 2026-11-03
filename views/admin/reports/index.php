@@ -40,9 +40,6 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
         <button type="button" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold shadow-sm" onclick="window.print()">
             <i class="bi bi-printer me-1"></i>In Báo Cáo
         </button>
-        <a href="<?= url('admin/reports/export-csv?tu_ngay=' . $tuNgay . '&den_ngay=' . $denNgay) ?>" class="btn btn-success rounded-pill px-3 fw-semibold shadow-sm">
-            <i class="bi bi-file-earmark-excel me-1"></i>Xuất File CSV
-        </a>
     </div>
 </div>
 

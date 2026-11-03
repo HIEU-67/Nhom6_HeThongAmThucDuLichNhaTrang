@@ -242,7 +242,7 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
         <div class="col-lg-5 col-xl-5" id="col-locations-map">
             <div class="sticky-map-wrapper">
                 <!-- Thanh công cụ nổi trên bản đồ -->
-                <div class="map-floating-bar">
+                <div class="map-floating-bar d-flex align-items-center gap-2">
                     <span class="map-pill-badge" id="map-counter-badge">
                         <i class="bi bi-geo-fill text-warning me-1"></i><span id="map-pin-count"><?= count($diaDiemList) ?></span> ghim tọa độ
                     </span>

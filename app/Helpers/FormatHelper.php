@@ -44,7 +44,7 @@ class FormatHelper
      */
     public static function saoHtml(int|float $soSao): string
     {
-        $html = '<span class="text-warning">';
+        $html = '<span class="text-warning text-nowrap">';
         for ($i = 1; $i <= 5; $i++) {
             if ($i <= $soSao) {
                 $html .= '<i class="bi bi-star-fill"></i>';
