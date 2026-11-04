@@ -509,6 +509,16 @@ h1, h2, h3, h4, h5, h6,
     background: #ffffff;
 }
 
+.search-field-box select {
+    cursor: pointer;
+    background-position: right 0.25rem center;
+}
+
+.search-field-box select option {
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
 .search-field-box:focus-within {
     border-color: #0284c7;
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
@@ -741,17 +751,28 @@ h1, h2, h3, h4, h5, h6,
 .map-floating-bar {
     position: absolute;
     top: 14px;
-    left: 60px;
-    right: 60px;
-    z-index: 1000;
+    left: 56px;
+    z-index: 900;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 8px;
     pointer-events: none;
+    max-width: calc(100% - 130px);
 }
 
 .map-floating-bar > * {
     pointer-events: auto;
+}
+
+/* Đảm bảo Layer Switcher (Ô vuông chọn lớp bản đồ) luôn nổi bật và không bao giờ bị che khuất */
+.leaflet-control-layers {
+    z-index: 1050 !important;
+}
+
+.leaflet-control-layers-expanded {
+    z-index: 1050 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 12px !important;
 }
 
 .map-pill-badge {
@@ -1306,7 +1327,9 @@ h1, h2, h3, h4, h5, h6,
    ======================================================== */
 
 /* 1. Thiết lập Biến Màu Dark Mode */
+html[data-bs-theme="dark"],
 [data-bs-theme="dark"] {
+    color-scheme: dark;
     --color-background: #0b1329;
     --color-card: #1e293b;
     --color-foreground: #f8fafc;
@@ -1443,9 +1466,24 @@ h1, h2, h3, h4, h5, h6,
     color: #f8fafc !important;
 }
 
-[data-bs-theme="dark"] .search-field-box input,
+[data-bs-theme="dark"] .search-field-box input {
+    background-color: transparent !important;
+    color: #f8fafc !important;
+    color-scheme: dark;
+}
+
 [data-bs-theme="dark"] .search-field-box select {
-    background: transparent !important;
+    background-color: transparent !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cbd5e1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.25rem center !important;
+    background-size: 16px 12px !important;
+    color: #f8fafc !important;
+    color-scheme: dark;
+}
+
+[data-bs-theme="dark"] .search-field-box select option {
+    background-color: #1e293b !important;
     color: #f8fafc !important;
 }
 
@@ -1702,11 +1740,35 @@ h1, h2, h3, h4, h5, h6,
 }
 
 /* 10. Form Nhập Liệu, Select & Controls */
+select option,
+.form-select option {
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
 [data-bs-theme="dark"] .form-control,
-[data-bs-theme="dark"] .form-select {
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] select {
     background-color: #0f172a !important;
     border-color: #334155 !important;
     color: #f8fafc !important;
+    color-scheme: dark;
+}
+
+[data-bs-theme="dark"] .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cbd5e1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+[data-bs-theme="dark"] select option,
+[data-bs-theme="dark"] .form-select option {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] select option:checked,
+[data-bs-theme="dark"] .form-select option:checked {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
 }
 
 [data-bs-theme="dark"] .form-control:focus,
@@ -2323,6 +2385,24 @@ h1, h2, h3, h4, h5, h6,
     background: rgba(15, 23, 42, 0.9) !important;
     border: 1px solid #334155 !important;
     color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] #btn-fit-bounds {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] #btn-fit-bounds:hover {
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .leaflet-control-layers-expanded {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
 }
 
 /* Tối ưu hóa lớp gạch bản đồ Leaflet trong Dark Mode */

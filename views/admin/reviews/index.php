@@ -143,7 +143,7 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                     <th class="ps-4" style="width: 60px;">#ID</th>
                     <th style="min-width: 160px;">Khách hàng</th>
                     <th style="min-width: 180px;">Địa điểm</th>
-                    <th style="width: 110px;">Xếp hạng</th>
+                    <th style="min-width: 125px; width: 125px;" class="text-nowrap">Xếp hạng</th>
                     <th style="min-width: 260px;">Nội dung nhận xét</th>
                     <th style="width: 120px;">Thời gian</th>
                     <th style="width: 110px;">Trạng thái</th>
@@ -171,8 +171,8 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                                     <?= htmlspecialchars($rev['ten_dia_diem']) ?> <i class="bi bi-box-arrow-up-right small"></i>
                                 </a>
                             </td>
-                            <td>
-                                <div><?= \App\Helpers\FormatHelper::saoHtml((int)$rev['so_sao']) ?></div>
+                            <td class="text-nowrap">
+                                <div class="text-nowrap mb-1"><?= \App\Helpers\FormatHelper::saoHtml((int)$rev['so_sao']) ?></div>
                                 <span class="badge bg-warning-subtle text-warning-emphasis fw-bold" style="font-size: 11px;">
                                     <?= (int)$rev['so_sao'] ?> / 5 sao
                                 </span>

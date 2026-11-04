@@ -28,7 +28,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
 
         <!-- Khung Tìm Kiếm Phong Cách Agoda -->
         <div class="row justify-content-center">
-            <div class="col-xl-10 col-lg-11">
+            <div class="col-xxl-10 col-xl-11 col-lg-12">
                 <div class="agoda-search-card">
                     <!-- Tab Switcher -->
                     <div class="d-flex flex-wrap gap-2 mb-3 pb-2 border-bottom">
@@ -49,7 +49,7 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
 
                         <div class="row g-2 align-items-center">
                             <!-- Ô Tìm kiếm từ khóa -->
-                            <div class="col-lg-5 col-md-12">
+                            <div class="col-lg-4 col-md-12">
                                 <div class="search-field-box d-flex align-items-center gap-2">
                                     <i class="bi bi-search text-primary fs-5"></i>
                                     <div class="w-100">
@@ -73,12 +73,12 @@ require_once dirname(__DIR__, 2) . '/layouts/header.php';
                             </div>
 
                             <!-- Ô Khách tham quan -->
-                            <div class="col-lg-2 col-sm-6">
+                            <div class="col-lg-3 col-sm-6">
                                 <div class="search-field-box d-flex align-items-center gap-2">
                                     <i class="bi bi-people text-primary fs-5"></i>
                                     <div class="w-100">
                                         <label class="text-muted small d-block mb-0" style="font-size: 11px; font-weight: 600;">SỐ LƯỢNG</label>
-                                        <select class="form-select p-0 border-0 shadow-none fw-semibold text-dark" style="font-size: 14px;">
+                                        <select class="form-select p-0 border-0 shadow-none fw-semibold text-dark search-guest-select" name="so_luong" style="font-size: 14px; padding-right: 1.25rem !important;" aria-label="Chọn số lượng khách">
                                             <option value="1">1 người lớn</option>
                                             <option value="2" selected>2 người lớn</option>
                                             <option value="4">Gia đình (4 người)</option>

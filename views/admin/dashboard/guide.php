@@ -214,14 +214,20 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                             </p>
                             <ul class="small text-secondary ps-3 mb-0 lh-lg">
                                 <li>Thiết lập danh mục chính: <em>Du Lịch & Vé Tham Quan</em>, <em>Ẩm Thực & Đặc Sản Nha Trang</em>, <em>Di Tích Lịch Sử</em>, <em>Khu Nghỉ Dưỡng Biển</em>...</li>
-                                <li>Tùy chọn icon Bootstrap biểu trưng và thứ tự sắp xếp ưu tiên hiển thị trên thanh Menu và bộ lọc khám phá.</li>
+                                <li>Tùy chọn biểu tượng minh họa đặc trưng và thứ tự sắp xếp ưu tiên hiển thị trên thanh Menu và bộ lọc khám phá.</li>
                                 <li>Slug URL chuẩn SEO thân thiện, tự động tạo theo tên tiếng Việt không dấu.</li>
                             </ul>
                         </div>
                         <div class="col-md-4 text-center">
                             <div class="p-3 bg-light rounded-4 border">
-                                <span class="badge bg-primary px-3 py-2 rounded-pill mb-2">Icon Bootstrap 5</span>
-                                <p class="small text-muted mb-0">Sử dụng mã icon như <code>bi-water</code>, <code>bi-cup-hot</code>, <code>bi-compass</code> để hiển thị trực quan.</p>
+                                <span class="badge bg-primary px-3 py-2 rounded-pill mb-2">Biểu Tượng Trực Quan</span>
+                                <div class="d-flex justify-content-center gap-3 fs-4 text-primary my-2">
+                                    <i class="bi bi-water" title="Biển đảo"></i>
+                                    <i class="bi bi-cup-hot" title="Ẩm thực"></i>
+                                    <i class="bi bi-compass" title="Tour khám phá"></i>
+                                    <i class="bi bi-camera" title="Check-in"></i>
+                                </div>
+                                <p class="small text-muted mb-0">Hỗ trợ chọn nhanh biểu tượng phong phú (biển đảo, ẩm thực, du lịch...) chỉ bằng một cú nhấp chuột.</p>
                             </div>
                         </div>
                     </div>

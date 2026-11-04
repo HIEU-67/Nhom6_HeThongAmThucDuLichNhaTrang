@@ -31,10 +31,27 @@
             -webkit-font-smoothing: antialiased;
         }
         .sidebar {
-            min-height: 100vh;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
             background: linear-gradient(180deg, #0b1329 0%, #0f172a 100%);
             border-right: 1px solid rgba(255, 255, 255, 0.06);
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05);
+            z-index: 1020;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
         .sidebar .nav-link {
             color: #94a3b8;

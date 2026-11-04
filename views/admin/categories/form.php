@@ -115,10 +115,10 @@ $currentLoai = $category['loai_danh_muc'] ?? 'du_lich';
                     </div>
                 </div>
 
-                <!-- 4. Biểu tượng Bootstrap Icon -->
+                <!-- 4. Biểu tượng danh mục -->
                 <div class="mb-4">
                     <label for="bieu_tuong" class="form-label fw-bold text-dark">
-                        Biểu Tượng (Bootstrap Icon Class)
+                        Biểu Tượng Danh Mục
                     </label>
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="rounded-circle bg-light border shadow-sm d-flex align-items-center justify-content-center text-primary" style="width: 54px; height: 54px; flex-shrink: 0;" id="iconPreviewBox">
@@ -129,7 +129,7 @@ $currentLoai = $category['loai_danh_muc'] ?? 'du_lich';
                                    class="form-control rounded-3" 
                                    id="bieu_tuong" 
                                    name="bieu_tuong" 
-                                   placeholder="bi-compass, bi-water, bi-cup-hot..." 
+                                   placeholder="Chọn biểu tượng danh mục hoặc bấm chọn nhanh bên dưới..." 
                                    value="<?= htmlspecialchars($currentIcon) ?>" 
                                    oninput="updateIconPreview(this.value)">
                         </div>

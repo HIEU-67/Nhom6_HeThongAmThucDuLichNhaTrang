@@ -146,8 +146,7 @@ $totalPages = ceil($totalCategories / $perPage);
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark fs-6"><?= htmlspecialchars($cat['ten_danh_muc']) ?></div>
-                                <code class="small text-muted">/locations?danh_muc_id=<?= $cat['id'] ?></code> &bull;
+                                <div class="fw-bold text-dark fs-6 mb-1"><?= htmlspecialchars($cat['ten_danh_muc']) ?></div>
                                 <span class="badge bg-light text-secondary border small"><?= htmlspecialchars($cat['duong_dan']) ?></span>
                             </td>
                             <td>
