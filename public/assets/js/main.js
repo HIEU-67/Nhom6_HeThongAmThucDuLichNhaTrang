@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
             zoomControl: true,
             scrollWheelZoom: true
         }).setView([12.2475, 109.1967], 13);
+        window.mapInstance = map;
 
         // Tạo lớp nền bản đồ dựa trên cấu hình MAP_PROVIDER và MAP_API_KEY
         const primaryTileLayer = taoTileLayer();
@@ -370,6 +371,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="text-danger fw-bold small mb-2">${giaFormatted}</div>
                         ${distanceHtml}
                         <div class="mt-2 pt-2 border-top d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-warning py-2 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1 btn-trip-popup-${item.id}" onclick="window.toggleTripLocation(${item.id}, '${safeTitle.replace(/'/g, "\\'")}', ${lat}, ${lng}, ${item.gia_thap_nhat || 0})" title="Thêm vào lộ trình đa điểm">
+                                <i class="bi bi-pin-map"></i><span>Lộ trình</span>
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-primary py-2 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1" onclick="window.startMapRouting(${lat}, ${lng}, '${safeTitle.replace(/'/g, "\\'")}')" title="Dẫn đường OSRM">
                                 <i class="bi bi-sign-turn-right-fill"></i><span>Chỉ đường</span>
                             </button>
@@ -490,6 +494,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
                                 <span class="location-card-price">${giaFormatted}</span>
                                 <div class="d-flex gap-1" onclick="event.stopPropagation();">
+                                    <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1 btn-trip-action-${item.id}" onclick="window.toggleTripLocation(${item.id}, '${safeTitle.replace(/'/g, "\\'")}', ${item.vi_do}, ${item.kinh_do}, ${item.gia_thap_nhat || 0})" title="Thêm vào lộ trình đa điểm">
+                                        <i class="bi bi-pin-map"></i> Lộ trình
+                                    </button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" onclick="focusOnMap(${item.id}, ${item.vi_do}, ${item.kinh_do})" title="Xem vị trí trên bản đồ">
                                         <i class="bi bi-geo-alt"></i>
                                     </button>
@@ -508,6 +515,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         container.innerHTML = html;
+        if (typeof window.updateTripUI === 'function') {
+            window.updateTripUI();
+        }
     }
 
     // 9. Tập trung vào bản đồ khi click thẻ (Bidirectional Interaction)
@@ -1341,6 +1351,421 @@ window.updateThemeUI = function(theme) {
     floatLightIcons.forEach(el => el.classList.toggle('d-none', !isDark));
 };
 
+// ========================================================
+// TÍNH NĂNG MỚI (ĐỀ XUẤT 3): GIỎ LỘ TRÌNH ĐA ĐIỂM & TỐI ƯU TUYẾN ĐƯỜNG
+// OSRM Multi-Waypoint Routing & Nearest Neighbor Algorithm
+// ========================================================
+window.tripSelectedLocations = JSON.parse(localStorage.getItem('nhatrang_trip_planner') || '[]');
+let multiRouteLayerGroup = null;
+
+window.saveTripLocations = function() {
+    localStorage.setItem('nhatrang_trip_planner', JSON.stringify(window.tripSelectedLocations));
+    window.updateTripUI();
+};
+
+window.toggleTripLocation = function(id, title, lat, lng, price) {
+    id = parseInt(id);
+    const existingIndex = window.tripSelectedLocations.findIndex(item => item.id === id);
+
+    if (existingIndex > -1) {
+        window.tripSelectedLocations.splice(existingIndex, 1);
+    } else {
+        if (!title || !lat || !lng) {
+            const list = window.INITIAL_LOCATIONS || [];
+            const found = list.find(l => l.id == id);
+            if (found) {
+                title = found.ten_dia_diem;
+                lat = parseFloat(found.vi_do);
+                lng = parseFloat(found.kinh_do);
+                price = parseFloat(found.gia_thap_nhat || 0);
+            }
+        }
+        window.tripSelectedLocations.push({
+            id: id,
+            title: title || ('Địa điểm #' + id),
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+            price: parseFloat(price || 0)
+        });
+    }
+
+    window.saveTripLocations();
+};
+
+window.updateTripUI = function() {
+    const list = window.tripSelectedLocations || [];
+    const count = list.length;
+    const bar = document.getElementById('floating-trip-bar');
+    const countEl = document.getElementById('trip-selected-count');
+    const namesEl = document.getElementById('trip-selected-names');
+
+    if (countEl) countEl.textContent = count;
+    if (namesEl) {
+        if (count === 0) {
+            namesEl.textContent = 'Chưa chọn địa điểm nào';
+        } else {
+            namesEl.textContent = list.map(item => item.title).join(' ➔ ');
+        }
+    }
+
+    if (bar) {
+        if (count > 0) {
+            bar.classList.remove('d-none');
+        } else {
+            bar.classList.add('d-none');
+        }
+    }
+
+    // Cập nhật trạng thái nút trên các Card
+    document.querySelectorAll('[class*="btn-trip-action-"]').forEach(btn => {
+        const match = btn.className.match(/btn-trip-action-(\d+)/);
+        if (match) {
+            const id = parseInt(match[1]);
+            const isSelected = list.some(i => i.id === id);
+            if (isSelected) {
+                btn.className = `btn btn-warning btn-sm rounded-pill px-2 py-1 btn-trip-action-${id}`;
+                btn.innerHTML = '<i class="bi bi-check2-circle"></i> Đã thêm';
+            } else {
+                btn.className = `btn btn-outline-warning btn-sm rounded-pill px-2 py-1 btn-trip-action-${id}`;
+                btn.innerHTML = '<i class="bi bi-pin-map"></i> Lộ trình';
+            }
+        }
+    });
+
+    // Cập nhật trạng thái nút trong Popup nếu đang mở
+    document.querySelectorAll('[class*="btn-trip-popup-"]').forEach(btn => {
+        const match = btn.className.match(/btn-trip-popup-(\d+)/);
+        if (match) {
+            const id = parseInt(match[1]);
+            const isSelected = list.some(i => i.id === id);
+            if (isSelected) {
+                btn.className = `btn btn-sm btn-warning py-2 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1 btn-trip-popup-${id}`;
+                btn.innerHTML = '<i class="bi bi-check2-circle text-dark"></i><span>Đã thêm</span>';
+            } else {
+                btn.className = `btn btn-sm btn-outline-warning py-2 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1 btn-trip-popup-${id}`;
+                btn.innerHTML = '<i class="bi bi-pin-map text-warning"></i><span>Lộ trình</span>';
+            }
+        }
+    });
+};
+
+window.clearAllTripLocations = function() {
+    if (window.tripSelectedLocations.length === 0) return;
+    if (confirm('Bạn có chắc chắn muốn xóa tất cả các điểm trong lộ trình hiện tại?')) {
+        window.tripSelectedLocations = [];
+        window.saveTripLocations();
+        if (multiRouteLayerGroup && window.mapInstance) {
+            window.mapInstance.removeLayer(multiRouteLayerGroup);
+            multiRouteLayerGroup = null;
+        }
+        const modalEl = document.getElementById('tripPlannerModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+        }
+    }
+};
+
+window.removeTripItem = function(index) {
+    window.tripSelectedLocations.splice(index, 1);
+    window.saveTripLocations();
+    window.renderTripModalContent();
+};
+
+window.moveTripItem = function(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= window.tripSelectedLocations.length) return;
+    const temp = window.tripSelectedLocations[index];
+    window.tripSelectedLocations[index] = window.tripSelectedLocations[newIndex];
+    window.tripSelectedLocations[newIndex] = temp;
+    window.saveTripLocations();
+    window.renderTripModalContent();
+};
+
+// Thuật toán tối ưu hóa thứ tự gần nhất (Nearest-Neighbor TSP Algorithm)
+window.optimizeTripOrder = function() {
+    if (window.tripSelectedLocations.length <= 1) {
+        alert('Cần ít nhất 2 địa điểm để thực hiện tối ưu thứ tự lộ trình.');
+        return;
+    }
+
+    let startLat = 12.2388;
+    let startLng = 109.1961;
+    if (window.userCoords) {
+        startLat = window.userCoords.lat;
+        startLng = window.userCoords.lng;
+    }
+
+    const unvisited = [...window.tripSelectedLocations];
+    const optimized = [];
+    let currentLat = startLat;
+    let currentLng = startLng;
+
+    // Helper Haversine nội bộ nếu chưa có
+    function distCalc(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    while (unvisited.length > 0) {
+        let nearestIndex = 0;
+        let minDistance = Infinity;
+
+        for (let i = 0; i < unvisited.length; i++) {
+            const d = distCalc(currentLat, currentLng, unvisited[i].lat, unvisited[i].lng);
+            if (d < minDistance) {
+                minDistance = d;
+                nearestIndex = i;
+            }
+        }
+
+        const nextPoint = unvisited.splice(nearestIndex, 1)[0];
+        optimized.push(nextPoint);
+        currentLat = nextPoint.lat;
+        currentLng = nextPoint.lng;
+    }
+
+    window.tripSelectedLocations = optimized;
+    window.saveTripLocations();
+    window.renderTripModalContent();
+    alert('⚡ ĐÃ TỐI ƯU HÓA!\nThứ tự các chặng đã được thuật toán tự động sắp xếp theo khoảng cách gần nhất, giảm thiểu tối đa tình trạng đi vòng lặp.');
+};
+
+window.renderTripModalContent = function() {
+    const list = window.tripSelectedLocations || [];
+    const container = document.getElementById('trip-stops-list');
+    const stopCountEl = document.getElementById('trip-modal-stop-count');
+    const totalTicketsEl = document.getElementById('trip-total-tickets');
+
+    function fmtMoney(num) {
+        num = parseFloat(num) || 0;
+        if (num <= 0) return 'Miễn phí';
+        return num.toLocaleString('vi-VN') + ' đ';
+    }
+
+    if (stopCountEl) stopCountEl.textContent = list.length;
+
+    let totalTickets = 0;
+    list.forEach(i => totalTickets += (i.price || 0));
+    if (totalTicketsEl) totalTicketsEl.textContent = fmtMoney(totalTickets);
+
+    if (!container) return;
+
+    if (list.length === 0) {
+        container.innerHTML = `
+            <div class="p-4 text-center text-muted bg-light rounded-3 border">
+                <i class="bi bi-geo-alt fs-2 text-secondary d-block mb-2"></i>
+                <p class="small mb-2">Chưa có địa điểm nào trong lộ trình.</p>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-dismiss="modal">
+                    Bấm "+ Lộ trình" trên các thẻ để thêm
+                </button>
+            </div>
+        `;
+        document.getElementById('trip-total-distance').textContent = '0 km';
+        document.getElementById('trip-total-time').textContent = '0 phút';
+        document.getElementById('trip-cost-bike').textContent = '0 đ';
+        document.getElementById('trip-cost-grab').textContent = '0 đ';
+        return;
+    }
+
+    let html = '';
+    list.forEach((item, index) => {
+        const stepNum = index + 1;
+        html += `
+            <div class="p-2.5 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-2 shadow-2xs">
+                <div class="d-flex align-items-center gap-2.5 overflow-hidden">
+                    <span class="badge rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold" style="width: 26px; height: 26px; font-size: 13px;">
+                        ${stepNum}
+                    </span>
+                    <div class="overflow-hidden">
+                        <strong class="text-dark small text-truncate d-block" style="font-size: 13.5px;">${item.title}</strong>
+                        <span class="text-muted small" style="font-size: 11px;">Vé từ: ${fmtMoney(item.price)}</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <button type="button" class="btn btn-sm btn-light border py-0 px-1.5" onclick="window.moveTripItem(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="Di chuyển lên">
+                        <i class="bi bi-arrow-up-short"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light border py-0 px-1.5" onclick="window.moveTripItem(${index}, 1)" ${index === list.length - 1 ? 'disabled' : ''} title="Di chuyển xuống">
+                        <i class="bi bi-arrow-down-short"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger border py-0 px-1.5 ms-1" onclick="window.removeTripItem(${index})" title="Xóa chặng này">
+                        <i class="bi bi-trash3" style="font-size: 11px;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    let startLat = 12.2388;
+    let startLng = 109.1961;
+    if (window.userCoords) {
+        startLat = window.userCoords.lat;
+        startLng = window.userCoords.lng;
+    }
+
+    function distCalc(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    let totalKm = 0;
+    let prevLat = startLat;
+    let prevLng = startLng;
+
+    list.forEach(pt => {
+        totalKm += distCalc(prevLat, prevLng, pt.lat, pt.lng);
+        prevLat = pt.lat;
+        prevLng = pt.lng;
+    });
+
+    const roadKm = totalKm * 1.25;
+    const estMinutes = Math.round(roadKm * 2.5);
+    const costBike = Math.round(roadKm * 0.022 * 23000);
+    const costGrab = Math.round(13000 + Math.max(0, roadKm - 2) * 4500);
+
+    const distEl = document.getElementById('trip-total-distance');
+    const timeEl = document.getElementById('trip-total-time');
+    const bikeEl = document.getElementById('trip-cost-bike');
+    const grabEl = document.getElementById('trip-cost-grab');
+
+    if (distEl) distEl.textContent = roadKm.toFixed(1) + ' km';
+    if (timeEl) timeEl.textContent = estMinutes + ' phút';
+    if (bikeEl) bikeEl.textContent = fmtMoney(costBike);
+    if (grabEl) grabEl.textContent = fmtMoney(costGrab);
+};
+
+window.openTripModal = function() {
+    window.renderTripModalContent();
+    const modalEl = document.getElementById('tripPlannerModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+};
+
+window.drawMultiRouteOnMap = function() {
+    const list = window.tripSelectedLocations || [];
+    if (list.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 địa điểm để vẽ lộ trình.');
+        return;
+    }
+
+    const modalEl = document.getElementById('tripPlannerModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+    }
+
+    let startLat = 12.2388;
+    let startLng = 109.1961;
+    if (window.userCoords) {
+        startLat = window.userCoords.lat;
+        startLng = window.userCoords.lng;
+    }
+
+    const coordParts = [`${startLng},${startLat}`];
+    list.forEach(pt => {
+        coordParts.push(`${pt.lng},${pt.lat}`);
+    });
+
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordParts.join(';')}?overview=full&geometries=geojson&steps=false`;
+
+    fetch(osrmUrl)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.routes || data.routes.length === 0) {
+                alert('Không thể tìm thấy tuyến đường nối các điểm này qua OSRM.');
+                return;
+            }
+
+            const route = data.routes[0];
+            const coordinates = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+            if (multiRouteLayerGroup && window.mapInstance) {
+                window.mapInstance.removeLayer(multiRouteLayerGroup);
+            }
+            multiRouteLayerGroup = L.layerGroup();
+
+            const casing = L.polyline(coordinates, {
+                color: '#ffffff',
+                weight: 8,
+                opacity: 0.95,
+                lineJoin: 'round'
+            });
+
+            const line = L.polyline(coordinates, {
+                color: '#f97316',
+                weight: 5,
+                opacity: 0.95,
+                lineJoin: 'round',
+                dashArray: '8, 6'
+            });
+
+            multiRouteLayerGroup.addLayer(casing);
+            multiRouteLayerGroup.addLayer(line);
+
+            const startMarker = L.circleMarker([startLat, startLng], {
+                radius: 8,
+                fillColor: '#0284c7',
+                color: '#ffffff',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1
+            }).bindPopup('<strong>Điểm xuất phát</strong><br><small class="text-muted">(Vị trí hiện tại / Quảng trường 2/4)</small>');
+            multiRouteLayerGroup.addLayer(startMarker);
+
+            list.forEach((item, index) => {
+                const num = index + 1;
+                const numberIcon = L.divIcon({
+                    className: 'custom-trip-marker',
+                    html: `
+                        <div style="background: #ea580c; color: #fff; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                            ${num}
+                        </div>
+                    `,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                    popupAnchor: [0, -16]
+                });
+
+                function fmtMoney(num) {
+                    num = parseFloat(num) || 0;
+                    if (num <= 0) return 'Miễn phí';
+                    return num.toLocaleString('vi-VN') + ' đ';
+                }
+
+                const m = L.marker([item.lat, item.lng], { icon: numberIcon })
+                    .bindPopup(`<strong>Chặng ${num}: ${item.title}</strong><br><small class="text-muted">Vé: ${fmtMoney(item.price)}</small>`);
+                multiRouteLayerGroup.addLayer(m);
+            });
+
+            if (window.mapInstance) {
+                multiRouteLayerGroup.addTo(window.mapInstance);
+                window.mapInstance.fitBounds(line.getBounds(), { padding: [50, 50] });
+            }
+
+            const totalKm = (route.distance / 1000).toFixed(1);
+            const totalMins = Math.round(route.duration / 60);
+            alert(`🗺️ ĐÃ VẼ LỘ TRÌNH ĐA ĐIỂM!\nTổng quãng đường: ${totalKm} km\nThời gian lái xe dự kiến: ${totalMins} phút\nĐường đi qua ${list.length} chặng đã được đánh số thứ tự trên bản đồ.`);
+        })
+        .catch(err => {
+            alert('Lỗi khi gọi máy chủ định tuyến OSRM.');
+        });
+};
+
 window.toggleTheme = function() {
     const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
     const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
@@ -1351,8 +1776,13 @@ window.toggleTheme = function() {
 (function() {
     const currentTheme = document.documentElement.getAttribute('data-bs-theme') || localStorage.getItem('nhatrang_theme') || 'light';
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.updateThemeUI(currentTheme));
+        document.addEventListener('DOMContentLoaded', () => {
+            window.updateThemeUI(currentTheme);
+        if (typeof window.updateTripUI === 'function') window.updateTripUI();
+            if (typeof window.updateTripUI === 'function') window.updateTripUI();
+        });
     } else {
         window.updateThemeUI(currentTheme);
+        if (typeof window.updateTripUI === 'function') window.updateTripUI();
     }
 })();

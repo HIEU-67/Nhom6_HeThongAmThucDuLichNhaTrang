@@ -220,6 +220,9 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
                                         <?= \App\Helpers\FormatHelper::tienTe((float)$dd['gia_thap_nhat']) ?> - <?= \App\Helpers\FormatHelper::tienTe((float)$dd['gia_cao_nhat']) ?>
                                     </span>
                                     <div class="d-flex gap-1" onclick="event.stopPropagation();">
+                                        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1 btn-trip-action-<?= $dd['id'] ?>" onclick="window.toggleTripLocation(<?= $dd['id'] ?>, '<?= addslashes(htmlspecialchars($dd['ten_dia_diem'])) ?>', <?= (float)$dd['vi_do'] ?>, <?= (float)$dd['kinh_do'] ?>, <?= (float)$dd['gia_thap_nhat'] ?>)" title="Thêm vào lộ trình du lịch đa điểm">
+                                            <i class="bi bi-pin-map"></i> Lộ trình
+                                        </button>
                                         <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" onclick="focusOnMap(<?= $dd['id'] ?>, <?= $dd['vi_do'] ?>, <?= $dd['kinh_do'] ?>)" title="Xem vị trí trên bản đồ">
                                             <i class="bi bi-geo-alt"></i>
                                         </button>
@@ -257,6 +260,126 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
         </div>
     </div>
 </main>
+
+<!-- ========================================================
+     THANH CÔNG CỤ NỔI LỘ TRÌNH ĐA ĐIỂM (FLOATING TRIP BAR)
+     ======================================================== -->
+<div id="floating-trip-bar" class="d-none" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1050; max-width: 94%; width: 560px;">
+    <div class="card border-0 shadow-lg rounded-pill p-2 px-3 text-white d-flex flex-row align-items-center justify-content-between gap-2" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(255,255,255,0.2) !important; backdrop-filter: blur(10px);">
+        <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+            <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1.5 fw-bold" id="trip-count-badge">
+                <i class="bi bi-compass-fill me-1"></i><span id="trip-selected-count">0</span> điểm
+            </span>
+            <div class="small text-truncate text-white-50" id="trip-selected-names" style="font-size: 13px;">
+                Chưa chọn địa điểm nào
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-warning rounded-pill px-3 py-1.5 fw-bold shadow-sm d-flex align-items-center gap-1" onclick="window.openTripModal()">
+                <i class="bi bi-sign-turn-right-fill"></i><span>Xem Lộ Trình</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-light rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" onclick="window.clearAllTripLocations()" title="Xóa hết lộ trình">
+                <i class="bi bi-x-lg" style="font-size: 12px;"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================
+     MODAL LỘ TRÌNH ĐA ĐIỂM & TỐI ƯU CHI PHÍ
+     ======================================================== -->
+<div class="modal fade" id="tripPlannerModal" tabindex="-1" aria-labelledby="tripPlannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 1.25rem;">
+                        <i class="bi bi-signpost-2-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="tripPlannerModalLabel">Kế Hoạch Lộ Trình Đa Điểm</h5>
+                        <small class="text-muted">Tự động tối ưu tuyến đường di chuyển & dự toán chi phí du lịch</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body px-4 py-3">
+                <!-- Thanh công cụ tối ưu & điều khiển -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-2.5 bg-light rounded-3 mb-3 border">
+                    <div class="small fw-semibold text-secondary d-flex align-items-center gap-1">
+                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                        <span>Xuất phát: <strong>Vị trí của bạn / Quảng trường 2/4</strong></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-1 shadow-2xs" onclick="window.optimizeTripOrder()">
+                            <i class="bi bi-lightning-charge-fill text-warning"></i>
+                            <span>Tối ưu thứ tự gần nhất (TSP)</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" onclick="window.clearAllTripLocations()">
+                            <i class="bi bi-trash3 me-1"></i>Xóa hết
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Danh sách các chặng dừng -->
+                <div class="mb-3">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">Các chặng ghé thăm (<span id="trip-modal-stop-count">0</span> địa điểm):</h6>
+                    <div class="d-flex flex-column gap-2" id="trip-stops-list">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Bảng Dự Toán Quãng Đường & Chi Phí Thông Minh ($0 API) -->
+                <div class="card border-0 rounded-3 p-3 mb-2" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0 !important;">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-1.5" style="letter-spacing: 0.5px;">
+                        <i class="bi bi-calculator text-primary"></i>Dự Toán Hành Trình & Chi Phí Di Chuyển
+                    </h6>
+                    <div class="row g-2 mb-2 text-center">
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded-2 border">
+                                <small class="text-muted d-block" style="font-size: 11px;">Tổng quãng đường</small>
+                                <strong class="fs-6 text-primary" id="trip-total-distance">-- km</strong>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded-2 border">
+                                <small class="text-muted d-block" style="font-size: 11px;">Thời gian lái xe</small>
+                                <strong class="fs-6 text-dark" id="trip-total-time">-- phút</strong>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded-2 border">
+                                <small class="text-muted d-block" style="font-size: 11px;">Xăng xe máy (~)</small>
+                                <strong class="fs-6 text-success" id="trip-cost-bike">-- đ</strong>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded-2 border">
+                                <small class="text-muted d-block" style="font-size: 11px;">GrabBike ước tính</small>
+                                <strong class="fs-6 text-info" id="trip-cost-grab">-- đ</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between p-2 bg-white rounded-2 border small">
+                        <span class="text-secondary">
+                            <i class="bi bi-ticket-perforated text-warning me-1"></i>Tổng ngân sách vé tham quan dự kiến:
+                        </span>
+                        <strong class="text-danger fw-bold fs-6" id="trip-total-tickets">0 đ</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm d-flex align-items-center gap-1.5" onclick="window.drawMultiRouteOnMap()">
+                    <i class="bi bi-map-fill"></i>
+                    <span>Vẽ Lộ Trình Lên Bản Đồ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Nút Nổi Xem Bản Đồ Trên Màn Hình Di Động (Floating Action Button) -->
 <button type="button" class="btn btn-primary rounded-pill px-4 py-2 mobile-map-toggle-fab" id="btn-mobile-map-toggle">

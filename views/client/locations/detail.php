@@ -109,7 +109,12 @@ if ($hasTickets) {
                         </div>
                     </div>
 
-                    <h1 class="h2 fw-bold text-dark mb-3"><?= htmlspecialchars($diaDiem['ten_dia_diem']) ?></h1>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h1 class="h2 fw-bold text-dark mb-0"><?= htmlspecialchars($diaDiem['ten_dia_diem']) ?></h1>
+                        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-2xs" id="btnDetailAddToTrip" onclick="toggleDetailTripLocation(<?= (int)$diaDiem['id'] ?>, '<?= addslashes(htmlspecialchars($diaDiem['ten_dia_diem'])) ?>', <?= (float)$diaDiem['vi_do'] ?>, <?= (float)$diaDiem['kinh_do'] ?>, <?= (float)$diaDiem['gia_thap_nhat'] ?>)">
+                            <i class="bi bi-pin-map me-1"></i><span id="detailTripBtnText">Thêm vào Lộ trình</span>
+                        </button>
+                    </div>
 
                     <!-- Khung Thông Tin Nhanh Chuẩn Hóa -->
                     <div class="bg-light p-3 rounded-3 mb-4 border">
@@ -1269,6 +1274,48 @@ if ($hasTickets) {
             calculateRoute(12.2388, 109.1961, true);
         }
     }
+
+    // ========================================================
+    // TÍNH NĂNG MỚI: THÊM / XÓA ĐỊA ĐIỂM VÀO LỘ TRÌNH ĐA ĐIỂM
+    // ========================================================
+    function toggleDetailTripLocation(id, title, lat, lng, price) {
+        let trip = JSON.parse(localStorage.getItem('nhatrang_trip_planner') || '[]');
+        const idx = trip.findIndex(item => item.id === id);
+        const btnText = document.getElementById('detailTripBtnText');
+        const btn = document.getElementById('btnDetailAddToTrip');
+
+        if (idx > -1) {
+            trip.splice(idx, 1);
+            localStorage.setItem('nhatrang_trip_planner', JSON.stringify(trip));
+            if (btnText) btnText.textContent = 'Thêm vào Lộ trình';
+            if (btn) {
+                btn.className = 'btn btn-outline-warning btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-2xs';
+                btn.querySelector('i').className = 'bi bi-pin-map me-1';
+            }
+            alert('Đã xóa "' + title + '" khỏi kế hoạch lộ trình du lịch.');
+        } else {
+            trip.push({ id, title, lat, lng, price });
+            localStorage.setItem('nhatrang_trip_planner', JSON.stringify(trip));
+            if (btnText) btnText.textContent = 'Đã có trong Lộ trình';
+            if (btn) {
+                btn.className = 'btn btn-warning btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-2xs';
+                btn.querySelector('i').className = 'bi bi-check2-circle me-1';
+            }
+            alert('🎉 ĐÃ THÊM VÀO LỘ TRÌNH ĐA ĐIỂM!\nBạn có thể quay lại trang Bản Đồ để xem tuyến đường nối liên hoàn và dự toán chi phí.');
+        }
+    }
+
+    (function() {
+        let trip = JSON.parse(localStorage.getItem('nhatrang_trip_planner') || '[]');
+        const exists = trip.some(item => item.id == <?= (int)$diaDiem['id'] ?>);
+        const btnText = document.getElementById('detailTripBtnText');
+        const btn = document.getElementById('btnDetailAddToTrip');
+        if (exists && btn && btnText) {
+            btnText.textContent = 'Đã có trong Lộ trình';
+            btn.className = 'btn btn-warning btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-2xs';
+            btn.querySelector('i').className = 'bi bi-check2-circle me-1';
+        }
+    })();
 
     function closeDetailRouting() {
         const panel = document.getElementById('detail-osrm-panel');
