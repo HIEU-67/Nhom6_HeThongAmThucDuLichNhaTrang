@@ -99,6 +99,7 @@
                                 <li><a class="dropdown-item fw-semibold" href="<?= url('profile') ?>"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Vé của tôi & Hồ sơ</a></li>
                                 <li><a class="dropdown-item" href="<?= url('profile?tab=reviews') ?>"><i class="bi bi-star-fill me-2 text-warning"></i>Địa điểm đã đánh giá</a></li>
                                 <li><a class="dropdown-item" href="<?= url('profile?tab=favorites') ?>"><i class="bi bi-heart-fill me-2 text-danger"></i>Địa điểm yêu thích</a></li>
+                                <li><a class="dropdown-item fw-semibold text-success" href="<?= url('ho-chieu-du-lich') ?>"><i class="bi bi-journal-bookmark-fill me-2 text-success"></i>Hộ Chiếu Du Lịch Số <span class="badge bg-warning text-dark ms-1" style="font-size: 10px;">+50đ</span></a></li>
                             <?php else: ?>
                                 <!-- Menu dành riêng cho Quản trị viên (Ẩn Vé của tôi & Hồ sơ) -->
                                 <li><a class="dropdown-item text-danger fw-semibold" href="<?= url('admin/dashboard') ?>"><i class="bi bi-speedometer2 me-2"></i>Trang quản trị Admin</a></li>

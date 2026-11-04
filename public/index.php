@@ -42,6 +42,9 @@ Router::post('/dia-diem/xoa-danh-gia', [LocationController::class, 'deleteReview
 Router::get('/api/locations', [LocationController::class, 'apiLocations']);
 Router::get('/api/search-suggest', [LocationController::class, 'searchSuggest']);
 Router::post('/api/favorites/toggle', [LocationController::class, 'toggleFavorite']);
+Router::post('/api/checkin', [LocationController::class, 'apiCheckIn']);
+Router::get('/api/passport', [LocationController::class, 'apiPassport']);
+Router::get('/ho-chieu-du-lich', [LocationController::class, 'passport']);
 
 // ==========================================
 // 2. ROUTE XÁC THỰC (AUTHENTICATION)

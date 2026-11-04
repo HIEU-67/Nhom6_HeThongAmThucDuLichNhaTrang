@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const cleanPath = (path || '').replace(/^\//, '');
         return (base ? base : '') + '/' + cleanPath;
     }
+    window.getAppUrl = getAppUrl;
 
     // Helper chuẩn hóa đường dẫn ảnh (tuyệt đối / tương đối / fallback)
     function formatImageUrl(url) {
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
+    window.tinhKhoangCachKm = tinhKhoangCachKm;
 
     const mapElement = document.getElementById('map');
 
@@ -370,6 +372,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="text-danger fw-bold small mb-2">${giaFormatted}</div>
                         ${distanceHtml}
                         <div class="mt-2 pt-2 border-top d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-success py-1.5 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1" onclick="window.quickCheckInFromMap(${item.id}, '${safeTitle.replace(/'/g, "\\'")}', ${lat}, ${lng})" title="Check-in GPS nhận +50 điểm">
+                                <i class="bi bi-geo-alt-fill text-success"></i><span>Check-in</span>
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-primary py-2 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1" onclick="window.startMapRouting(${lat}, ${lng}, '${safeTitle.replace(/'/g, "\\'")}')" title="Dẫn đường OSRM">
                                 <i class="bi bi-sign-turn-right-fill"></i><span>Chỉ đường</span>
                             </button>
@@ -1339,6 +1344,98 @@ window.updateThemeUI = function(theme) {
     const floatLightIcons = document.querySelectorAll('.theme-float-icon-light');
     floatDarkIcons.forEach(el => el.classList.toggle('d-none', isDark));
     floatLightIcons.forEach(el => el.classList.toggle('d-none', !isDark));
+};
+
+// ========================================================
+// TÍNH NĂNG MỚI: CHECK-IN NHANH TRÊN BẢN ĐỒ SỐ (+50Đ)
+// ========================================================
+window.quickCheckInFromMap = function(diaDiemId, diaDiemTen, targetLat, targetLng) {
+    if (!confirm(`Bạn có muốn xác thực Check-in GPS tại "${diaDiemTen}" để nhận +50 điểm thưởng vào Hộ Chiếu Du Lịch không?`)) {
+        return;
+    }
+
+    function tinhDistM(lat1, lon1, lat2, lon2) {
+        if (typeof window.tinhKhoangCachKm === 'function') {
+            return Math.round(window.tinhKhoangCachKm(lat1, lon1, lat2, lon2) * 1000);
+        }
+        const R = 6371e3;
+        const rad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * rad;
+        const dLon = (lon2 - lon1) * rad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function layApiUrl(path) {
+        if (typeof window.getAppUrl === 'function') {
+            return window.getAppUrl(path);
+        }
+        const base = (window.APP_URL || '').replace(/\/$/, '');
+        const cleanPath = (path || '').replace(/^\//, '');
+        return (base ? base : '') + '/' + cleanPath;
+    }
+
+    function guiData(lat, lng, dist) {
+        const url = layApiUrl('api/checkin');
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                dia_diem_id: diaDiemId,
+                vi_do: lat,
+                kinh_do: lng,
+                khoang_cach_m: dist,
+                ghi_chu: 'Check-in nhanh từ Bản đồ số Nha Trang'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.require_login) {
+                alert(data.message || 'Vui lòng đăng nhập để check-in và tích lũy điểm!');
+                window.location.href = layApiUrl('login');
+                return;
+            }
+            if (!data.success) {
+                alert('⚠️ ' + (data.message || 'Check-in không thành công.'));
+                return;
+            }
+            const pts = data.tong_diem_moi || (data.passport ? data.passport.diem_tich_luy : 0);
+            alert(`🎉 CHÚC MỪNG!\n${data.message}\nTổng điểm tích lũy: ${pts} điểm.\nBạn có thể mở Hộ Chiếu Du Lịch trên menu để xem huy hiệu mới!`);
+            
+            // Cập nhật huy hiệu trên navbar nếu có
+            const badgeEl = document.getElementById('nav-passport-badge');
+            if (badgeEl && data.passport && data.passport.huy_hieu) {
+                badgeEl.textContent = data.passport.huy_hieu;
+            }
+        })
+        .catch(err => {
+            console.error('Check-in error:', err);
+            alert('Lỗi kết nối khi gửi dữ liệu check-in: ' + (err.message || 'Vui lòng thử lại sau.'));
+        });
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const dist = tinhDistM(pos.coords.latitude, pos.coords.longitude, targetLat, targetLng);
+                guiData(pos.coords.latitude, pos.coords.longitude, dist);
+            },
+            err => {
+                // Fallback demo nếu không cấp quyền GPS (ví dụ vị trí trung tâm Nha Trang)
+                const dist = tinhDistM(12.2388, 109.1961, targetLat, targetLng);
+                guiData(12.2388, 109.1961, dist);
+            },
+            { enableHighAccuracy: true, timeout: 6000 }
+        );
+    } else {
+        const dist = tinhDistM(12.2388, 109.1961, targetLat, targetLng);
+        guiData(12.2388, 109.1961, dist);
+    }
 };
 
 window.toggleTheme = function() {

@@ -109,7 +109,43 @@ if ($hasTickets) {
                         </div>
                     </div>
 
-                    <h1 class="h2 fw-bold text-dark mb-3"><?= htmlspecialchars($diaDiem['ten_dia_diem']) ?></h1>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h1 class="h2 fw-bold text-dark mb-0"><?= htmlspecialchars($diaDiem['ten_dia_diem']) ?></h1>
+                        <?php if (!empty($daCheckInHomNay)): ?>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 12px;">
+                                <i class="bi bi-patch-check-fill me-1"></i>Đã đóng dấu hôm nay (+50đ)
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- THUYẾT MINH VIÊN GIỌNG NÓI TỰ ĐỘNG (AUDIO GUIDE - $0 API) -->
+                    <div class="card border-0 rounded-4 shadow-2xs mb-4 overflow-hidden" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1px solid #bae6fd !important;">
+                        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="button" id="btnAudioGuideToggle" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; flex-shrink: 0;" onclick="toggleAudioGuide()" title="Bấm để phát thuyết minh">
+                                    <i class="bi bi-play-fill fs-4" id="audioGuideIcon"></i>
+                                </button>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold text-dark small" style="font-size: 13.5px;">Thuyết Minh Viên AI Điểm Đến</span>
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill small" style="font-size: 10px;">Web Speech API</span>
+                                    </div>
+                                    <div class="text-muted small" id="audioGuideStatusText" style="font-size: 12px;">
+                                        Nhấn để nghe thuyết minh giới thiệu <?= htmlspecialchars($diaDiem['ten_dia_diem']) ?> bằng giọng Tiếng Việt
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="btn-group btn-group-sm rounded-pill border bg-white p-0.5" role="group">
+                                    <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none px-2 py-0.5 rate-btn active fw-bold" onclick="setAudioRate(1.0, this)" style="font-size: 11px;">1x</button>
+                                    <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none px-2 py-0.5 rate-btn" onclick="setAudioRate(1.2, this)" style="font-size: 11px;">1.2x</button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1" onclick="stopAudioGuide()" id="btnAudioGuideStop" style="display: none; font-size: 11px;">
+                                    <i class="bi bi-stop-fill me-1"></i>Dừng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Khung Thông Tin Nhanh Chuẩn Hóa -->
                     <div class="bg-light p-3 rounded-3 mb-4 border">
@@ -915,6 +951,80 @@ if ($hasTickets) {
                     </div>
                 <?php endif; ?>
 
+                <!-- Card Check-in GPS & Hộ Chiếu Du Lịch Số (Gamification) -->
+                <div class="card border-0 rounded-4 shadow-sm mb-3 overflow-hidden bg-white" style="border: 1px solid #e2e8f0 !important;">
+                    <div class="p-3 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: #fff;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-geo-alt-fill fs-5 text-warning"></i>
+                            <span class="fw-bold text-uppercase small" style="letter-spacing: 0.5px;">Hộ Chiếu Du Lịch & Check-in</span>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 small fw-bold">
+                            +50 Điểm
+                        </span>
+                    </div>
+
+                    <div class="card-body p-3">
+                        <?php if (!empty($_SESSION['user_id'])): ?>
+                            <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
+                                <div>
+                                    <span class="badge rounded-pill px-2.5 py-1 small fw-bold" style="background-color: <?= htmlspecialchars($passportInfo['badge_color'] ?? '#eab308') ?>; color: #000;">
+                                        Hạng <?= htmlspecialchars($passportInfo['hang'] ?? 'Đồng') ?>
+                                    </span>
+                                    <span class="small text-muted ms-1"><?= number_format($passportInfo['diem_tich_luy'] ?? 0) ?> điểm</span>
+                                </div>
+                                <a href="<?= url('ho-chieu-du-lich') ?>" class="btn btn-sm btn-link text-success p-0 text-decoration-none fw-semibold small">
+                                    <i class="bi bi-journal-bookmark-fill me-1"></i>Xem Hộ chiếu
+                                </a>
+                            </div>
+
+                            <div id="checkinSuccessBox" class="<?= $daCheckInHomNay ? '' : 'd-none' ?>">
+                                <div class="p-3 rounded-3 text-center position-relative overflow-hidden mb-2" style="background: #ecfdf5; border: 2px dashed #059669;">
+                                    <div class="stamp-verified-mark mb-2 d-inline-block px-3 py-1 text-danger fw-bolder border border-danger rounded" style="transform: rotate(-6deg); font-size: 13px; letter-spacing: 1px; border-width: 2px !important;">
+                                        <i class="bi bi-check-circle-fill me-1"></i>ĐÃ ĐÓNG DẤU HÔM NAY
+                                    </div>
+                                    <p class="text-success small fw-semibold mb-1" id="checkinSuccessMsg">
+                                        Bạn đã check-in địa điểm này hôm nay (+50 điểm thưởng)!
+                                    </p>
+                                    <small class="text-muted" style="font-size: 11px;">Mỗi ngày 1 lần. Hãy quay lại vào ngày mai để tiếp tục nhận điểm.</small>
+                                </div>
+                                <a href="<?= url('ho-chieu-du-lich') ?>" class="btn btn-outline-success btn-sm w-100 rounded-pill fw-semibold">
+                                    <i class="bi bi-journal-text me-1"></i>Mở Hộ Chiếu & Xem Con Dấu
+                                </a>
+                            </div>
+
+                            <div id="checkinActionBox" class="<?= $daCheckInHomNay ? 'd-none' : '' ?>">
+                                <p class="text-muted small mb-2">
+                                    Xác thực vị trí thực tế của bạn tại <strong><?= htmlspecialchars($diaDiem['ten_dia_diem']) ?></strong> để nhận con dấu mộc du lịch và tích lũy điểm thưởng!
+                                </p>
+
+                                <div class="mb-2">
+                                    <input type="text" id="checkinGhiChuInput" class="form-control form-control-sm rounded-3" placeholder="Lời chia sẻ / Cảm nhận ngắn (tùy chọn)..." maxlength="150">
+                                </div>
+
+                                <div class="form-check form-switch small mb-3">
+                                    <input class="form-check-input" type="checkbox" id="checkinDemoModeCheckbox" checked>
+                                    <label class="form-check-label text-secondary small" for="checkinDemoModeCheckbox" style="font-size: 11.5px;">
+                                        Chế độ Demo / Thử nghiệm tại chỗ (Quảng trường 2/4)
+                                    </label>
+                                </div>
+
+                                <button type="button" id="btnExecuteCheckin" class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="thucHienCheckInTaiTrangChiTiet(<?= (int)$diaDiem['id'] ?>, '<?= addslashes(htmlspecialchars($diaDiem['ten_dia_diem'])) ?>', <?= (float)$diaDiem['vi_do'] ?>, <?= (float)$diaDiem['kinh_do'] ?>)">
+                                    <i class="bi bi-geo-alt-fill fs-6"></i>
+                                    <span>Check-in GPS Ngay (+50đ)</span>
+                                </button>
+                                <div id="checkinStatusText" class="small text-center text-muted mt-2 d-none"></div>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-2">
+                                <p class="text-muted small mb-3">Đăng nhập tài khoản để xác thực vị trí GPS, nhận +50 điểm thưởng và thu thập con dấu Hộ Chiếu Du Lịch Nha Trang!</p>
+                                <a href="<?= url('login') ?>" class="btn btn-outline-success btn-sm rounded-pill px-4 fw-semibold w-100">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập để Check-in (+50đ)
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <!-- Card Bản Đồ Vị Trí & Dẫn Đường OSRM Nội Bộ -->
                 <div class="bg-white border rounded-4 p-3 shadow-sm mb-3">
                     <h5 class="fw-bold mb-2 text-dark fs-6 d-flex align-items-center gap-2">
@@ -1267,6 +1377,224 @@ if ($hasTickets) {
             );
         } else {
             calculateRoute(12.2388, 109.1961, true);
+        }
+    }
+
+    // ========================================================
+    // TÍNH NĂNG MỚI 1: CHECK-IN GPS & HỘ CHIẾU DU LỊCH (+50Đ)
+    // ========================================================
+    function tinhHaversineMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const rad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * rad;
+        const dLon = (lon2 - lon1) * rad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return Math.round(R * c);
+    }
+
+    function thucHienCheckInTaiTrangChiTiet(diaDiemId, diaDiemTen, targetLat, targetLng) {
+        const btn = document.getElementById('btnExecuteCheckin');
+        const statusText = document.getElementById('checkinStatusText');
+        const noteInput = document.getElementById('checkinGhiChuInput');
+        const demoCheckbox = document.getElementById('checkinDemoModeCheckbox');
+
+        const ghiChu = noteInput ? noteInput.value.trim() : '';
+        const isDemo = demoCheckbox && demoCheckbox.checked;
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xác thực GPS...';
+        }
+        if (statusText) {
+            statusText.classList.remove('d-none');
+            statusText.innerHTML = '<i class="bi bi-broadcast text-primary me-1"></i>Đang lấy tọa độ vệ tinh...';
+        }
+
+        function guiCheckIn(lat, lng, dist) {
+            if (statusText) statusText.innerHTML = '<i class="bi bi-cloud-arrow-up text-primary me-1"></i>Đang ghi nhận vào Hộ Chiếu...';
+
+            fetch('<?= url("api/checkin") ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    dia_diem_id: diaDiemId,
+                    vi_do: lat,
+                    kinh_do: lng,
+                    khoang_cach_m: dist,
+                    ghi_chu: ghiChu
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-geo-alt-fill fs-6"></i><span>Check-in GPS Ngay (+50đ)</span>';
+                }
+
+                if (data.require_login) {
+                    alert(data.message || 'Vui lòng đăng nhập để check-in!');
+                    window.location.href = '<?= url("login") ?>';
+                    return;
+                }
+
+                if (!data.success) {
+                    alert('⚠️ ' + (data.message || 'Check-in không thành công.'));
+                    if (statusText) statusText.innerHTML = '<span class="text-danger">' + data.message + '</span>';
+                    return;
+                }
+
+                const actionBox = document.getElementById('checkinActionBox');
+                const successBox = document.getElementById('checkinSuccessBox');
+                const successMsg = document.getElementById('checkinSuccessMsg');
+
+                if (actionBox) actionBox.classList.add('d-none');
+                if (successBox) successBox.classList.remove('d-none');
+                if (successMsg) successMsg.textContent = data.message;
+
+                alert('🎉 CHÚC MỪNG!\n' + data.message + '\nTổng điểm tích lũy hiện tại của bạn: ' + (data.tong_diem_moi || data.passport?.diem_tich_luy || 0) + ' điểm.');
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-geo-alt-fill fs-6"></i><span>Check-in GPS Ngay (+50đ)</span>';
+                }
+                alert('Có lỗi mạng khi gửi dữ liệu check-in.');
+            });
+        }
+
+        if (isDemo) {
+            const demoLat = 12.2388;
+            const demoLng = 109.1961;
+            const dist = tinhHaversineMeters(demoLat, demoLng, targetLat, targetLng);
+            setTimeout(() => guiCheckIn(demoLat, demoLng, dist), 400);
+            return;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const uLat = pos.coords.latitude;
+                    const uLng = pos.coords.longitude;
+                    const dist = tinhHaversineMeters(uLat, uLng, targetLat, targetLng);
+                    guiCheckIn(uLat, uLng, dist);
+                },
+                err => {
+                    const demoLat = 12.2388;
+                    const demoLng = 109.1961;
+                    const dist = tinhHaversineMeters(demoLat, demoLng, targetLat, targetLng);
+                    guiCheckIn(demoLat, demoLng, dist);
+                },
+                { timeout: 7000, enableHighAccuracy: true }
+            );
+        } else {
+            const demoLat = 12.2388;
+            const demoLng = 109.1961;
+            const dist = tinhHaversineMeters(demoLat, demoLng, targetLat, targetLng);
+            guiCheckIn(demoLat, demoLng, dist);
+        }
+    }
+
+    // ========================================================
+    // TÍNH NĂNG MỚI 2: THUYẾT MINH VIÊN GIỌNG NÓI AI (WEB SPEECH API)
+    // ========================================================
+    let audioGuideUtterance = null;
+    let audioGuidePlaying = false;
+    let audioGuidePaused = false;
+    let audioGuideRate = 1.0;
+
+    const audioGuideText = `Chào mừng bạn đến với ${<?= json_encode($diaDiem['ten_dia_diem']) ?>}. ` +
+        `Địa điểm thuộc danh mục ${<?= json_encode($diaDiem['ten_danh_muc']) ?>}, tọa lạc tại ${<?= json_encode($diaDiem['dia_chi']) ?>}. ` +
+        `${<?= json_encode(strip_tags($diaDiem['mo_ta_ngan'] ?: '')) ?>}. ` +
+        `Nội dung trải nghiệm: ${<?= json_encode(mb_substr(strip_tags($diaDiem['noi_dung_chi_tiet'] ?: ''), 0, 220, 'UTF-8')) ?>}. ` +
+        `Chúc bạn có một chuyến trải nghiệm ẩm thực và du lịch tuyệt vời tại thành phố biển Nha Trang!`;
+
+    function toggleAudioGuide() {
+        if (!('speechSynthesis' in window)) {
+            alert('Trình duyệt của bạn không hỗ trợ Web Speech API.');
+            return;
+        }
+
+        const icon = document.getElementById('audioGuideIcon');
+        const status = document.getElementById('audioGuideStatusText');
+        const stopBtn = document.getElementById('btnAudioGuideStop');
+
+        if (audioGuidePlaying && !audioGuidePaused) {
+            window.speechSynthesis.pause();
+            audioGuidePaused = true;
+            if (icon) icon.className = 'bi bi-play-fill fs-4';
+            if (status) status.innerHTML = '<span class="text-warning fw-semibold"><i class="bi bi-pause-circle me-1"></i>Đang tạm dừng thuyết minh</span>';
+            return;
+        }
+
+        if (audioGuidePaused) {
+            window.speechSynthesis.resume();
+            audioGuidePaused = false;
+            if (icon) icon.className = 'bi bi-pause-fill fs-4';
+            if (status) status.innerHTML = '<span class="text-primary fw-semibold"><i class="bi bi-soundwave me-1"></i>Đang phát thuyết minh...</span>';
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        audioGuideUtterance = new SpeechSynthesisUtterance(audioGuideText);
+        audioGuideUtterance.lang = 'vi-VN';
+        audioGuideUtterance.rate = audioGuideRate;
+
+        const voices = window.speechSynthesis.getVoices();
+        const viVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi'));
+        if (viVoice) audioGuideUtterance.voice = viVoice;
+
+        audioGuideUtterance.onstart = function() {
+            audioGuidePlaying = true;
+            audioGuidePaused = false;
+            if (icon) icon.className = 'bi bi-pause-fill fs-4';
+            if (status) status.innerHTML = '<span class="text-primary fw-semibold"><i class="bi bi-soundwave me-1"></i>Đang phát thuyết minh...</span>';
+            if (stopBtn) stopBtn.style.display = 'inline-block';
+        };
+
+        audioGuideUtterance.onend = function() {
+            stopAudioGuide();
+        };
+
+        audioGuideUtterance.onerror = function() {
+            stopAudioGuide();
+        };
+
+        window.speechSynthesis.speak(audioGuideUtterance);
+    }
+
+    function stopAudioGuide() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        audioGuidePlaying = false;
+        audioGuidePaused = false;
+        const icon = document.getElementById('audioGuideIcon');
+        const status = document.getElementById('audioGuideStatusText');
+        const stopBtn = document.getElementById('btnAudioGuideStop');
+        if (icon) icon.className = 'bi bi-play-fill fs-4';
+        if (status) status.textContent = 'Nhấn để nghe thuyết minh giới thiệu điểm đến bằng giọng Tiếng Việt';
+        if (stopBtn) stopBtn.style.display = 'none';
+    }
+
+    function setAudioRate(rate, btn) {
+        audioGuideRate = rate;
+        document.querySelectorAll('.rate-btn').forEach(b => {
+            b.classList.remove('active', 'fw-bold', 'text-primary');
+            b.classList.add('text-secondary');
+        });
+        if (btn) {
+            btn.classList.add('active', 'fw-bold', 'text-primary');
+            btn.classList.remove('text-secondary');
+        }
+        if (audioGuidePlaying) {
+            stopAudioGuide();
+            toggleAudioGuide();
         }
     }
 
