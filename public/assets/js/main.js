@@ -370,6 +370,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="text-danger fw-bold small mb-2">${giaFormatted}</div>
                         ${distanceHtml}
                         <div class="mt-2 pt-2 border-top d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-success py-1.5 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1" onclick="window.quickCheckInFromMap(${item.id}, '${safeTitle.replace(/'/g, "\\'")}', ${lat}, ${lng})" title="Check-in GPS nhận +50 điểm">
+                                <i class="bi bi-geo-alt-fill text-success"></i><span>Check-in</span>
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-primary py-2 px-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-1" onclick="window.startMapRouting(${lat}, ${lng}, '${safeTitle.replace(/'/g, "\\'")}')" title="Dẫn đường OSRM">
                                 <i class="bi bi-sign-turn-right-fill"></i><span>Chỉ đường</span>
                             </button>
@@ -1339,6 +1342,66 @@ window.updateThemeUI = function(theme) {
     const floatLightIcons = document.querySelectorAll('.theme-float-icon-light');
     floatDarkIcons.forEach(el => el.classList.toggle('d-none', isDark));
     floatLightIcons.forEach(el => el.classList.toggle('d-none', !isDark));
+};
+
+// ========================================================
+// TÍNH NĂNG MỚI: CHECK-IN NHANH TRÊN BẢN ĐỒ SỐ (+50Đ)
+// ========================================================
+window.quickCheckInFromMap = function(diaDiemId, diaDiemTen, targetLat, targetLng) {
+    if (!confirm(`Bạn có muốn xác thực Check-in GPS tại "${diaDiemTen}" để nhận +50 điểm thưởng vào Hộ Chiếu Du Lịch không?`)) {
+        return;
+    }
+
+    function guiData(lat, lng, dist) {
+        fetch(getAppUrl('api/checkin'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                dia_diem_id: diaDiemId,
+                vi_do: lat,
+                kinh_do: lng,
+                khoang_cach_m: dist,
+                ghi_chu: 'Check-in nhanh từ Bản đồ số Nha Trang'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.require_login) {
+                alert(data.message || 'Vui lòng đăng nhập để check-in và tích lũy điểm!');
+                window.location.href = getAppUrl('login');
+                return;
+            }
+            if (!data.success) {
+                alert('⚠️ ' + (data.message || 'Check-in không thành công.'));
+                return;
+            }
+            alert(`🎉 CHÚC MỪNG!\n${data.message}\nTổng điểm tích lũy: ${data.tong_diem_moi || data.passport?.diem_tich_luy || 0} điểm.\nBạn có thể mở Hộ Chiếu Du Lịch để xem huy hiệu mới!`);
+        })
+        .catch(err => {
+            alert('Lỗi kết nối khi gửi dữ liệu check-in.');
+        });
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const dist = Math.round(tinhKhoangCachKm(pos.coords.latitude, pos.coords.longitude, targetLat, targetLng) * 1000);
+                guiData(pos.coords.latitude, pos.coords.longitude, dist);
+            },
+            err => {
+                // Fallback demo Quảng trường 2/4
+                const dist = Math.round(tinhKhoangCachKm(12.2388, 109.1961, targetLat, targetLng) * 1000);
+                guiData(12.2388, 109.1961, dist);
+            },
+            { timeout: 6000 }
+        );
+    } else {
+        const dist = Math.round(tinhKhoangCachKm(12.2388, 109.1961, targetLat, targetLng) * 1000);
+        guiData(12.2388, 109.1961, dist);
+    }
 };
 
 window.toggleTheme = function() {

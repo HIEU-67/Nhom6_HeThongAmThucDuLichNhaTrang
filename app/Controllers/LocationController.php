@@ -7,6 +7,7 @@ use App\Models\DiaDiem;
 use App\Models\GoiVe;
 use App\Models\DanhGia;
 use App\Models\YeuThich;
+use App\Models\CheckIn;
 use App\Middlewares\AuthMiddleware;
 
 class LocationController
@@ -16,6 +17,7 @@ class LocationController
     private GoiVe $goiVeModel;
     private DanhGia $danhGiaModel;
     private YeuThich $yeuThichModel;
+    private CheckIn $checkInModel;
 
     public function __construct()
     {
@@ -24,6 +26,7 @@ class LocationController
         $this->goiVeModel = new GoiVe();
         $this->danhGiaModel = new DanhGia();
         $this->yeuThichModel = new YeuThich();
+        $this->checkInModel = new CheckIn();
     }
 
     public function index(): void
@@ -87,8 +90,13 @@ class LocationController
 
         // Lấy đánh giá của chính người dùng hiện tại (nếu đã đăng nhập)
         $myReview = null;
+        $daCheckInHomNay = false;
+        $passportInfo = null;
         if (!empty($_SESSION['user_id'])) {
-            $myReview = $this->danhGiaModel->layCuaToiTheoDiaDiem((int)$_SESSION['user_id'], (int)$diaDiem['id']);
+            $userId = (int)$_SESSION['user_id'];
+            $myReview = $this->danhGiaModel->layCuaToiTheoDiaDiem($userId, (int)$diaDiem['id']);
+            $daCheckInHomNay = $this->checkInModel->kiemTraDaCheckInHomNay($userId, (int)$diaDiem['id']);
+            $passportInfo = $this->checkInModel->layThongKePassport($userId);
         }
 
         view('client.locations.detail', [
@@ -100,6 +108,8 @@ class LocationController
             'gallery'           => $gallery,
             'diaDiemLienQuan'   => $diaDiemLienQuan,
             'isFavorite'        => $isFavorite,
+            'daCheckInHomNay'   => $daCheckInHomNay,
+            'passportInfo'      => $passportInfo,
         ]);
     }
 
@@ -340,6 +350,109 @@ class LocationController
     /**
      * Endpoint API JSON gợi ý tức thì (Live Auto-Suggest Search)
      */
+    /**
+     * Endpoint API thực hiện Check-in GPS tại địa điểm & cộng điểm thưởng
+     */
+    public function apiCheckIn(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($_SESSION['user_id'])) {
+            echo json_encode([
+                'success'       => false,
+                'require_login' => true,
+                'message'       => 'Vui lòng đăng nhập tài khoản để thực hiện check-in và nhận điểm thưởng!'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $rawInput = file_get_contents('php://input');
+        $data = json_decode($rawInput, true) ?: $_POST;
+
+        $diaDiemId = (int)($data['dia_diem_id'] ?? 0);
+        if ($diaDiemId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Địa điểm check-in không hợp lệ!'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $diaDiem = $this->diaDiemModel->timTheoId($diaDiemId);
+        if (!$diaDiem) {
+            echo json_encode(['success' => false, 'message' => 'Địa điểm không tồn tại trên hệ thống!'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $viDo = isset($data['vi_do']) && is_numeric($data['vi_do']) ? (float)$data['vi_do'] : null;
+        $kinhDo = isset($data['kinh_do']) && is_numeric($data['kinh_do']) ? (float)$data['kinh_do'] : null;
+        $khoangCachM = isset($data['khoang_cach_m']) && is_numeric($data['khoang_cach_m']) ? (int)$data['khoang_cach_m'] : null;
+        $ghiChu = trim((string)($data['ghi_chu'] ?? ''));
+
+        $diemThuong = 50;
+        $userId = (int)$_SESSION['user_id'];
+
+        $result = $this->checkInModel->thucHienCheckIn(
+            $userId,
+            $diaDiemId,
+            $viDo,
+            $kinhDo,
+            $khoangCachM,
+            $diemThuong,
+            $ghiChu ?: null
+        );
+
+        if (!empty($result['success'])) {
+            $result['passport'] = $this->checkInModel->layThongKePassport($userId);
+            $result['dia_diem_ten'] = $diaDiem['ten_dia_diem'];
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
+     * Endpoint API lấy dữ liệu Hộ Chiếu Du Lịch & Thống kê cá nhân
+     */
+    public function apiPassport(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (empty($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'require_login' => true, 'message' => 'Vui lòng đăng nhập!'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $userId = (int)$_SESSION['user_id'];
+        $stats = $this->checkInModel->layThongKePassport($userId);
+        $history = $this->checkInModel->layLichSuUser($userId, 30);
+
+        echo json_encode([
+            'success' => true,
+            'stats'   => $stats,
+            'history' => $history
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
+     * Trang Hộ Chiếu Du Lịch Nha Trang (Digital Passport)
+     */
+    public function passport(): void
+    {
+        if (empty($_SESSION['user_id'])) {
+            set_flash('warning', 'Vui lòng đăng nhập để mở Hộ Chiếu Du Lịch của bạn!');
+            redirect('login');
+        }
+
+        $userId = (int)$_SESSION['user_id'];
+        $passport = $this->checkInModel->layThongKePassport($userId);
+        $history = $this->checkInModel->layLichSuUser($userId, 50);
+
+        view('client.locations.passport', [
+            'title'    => 'Hộ Chiếu Du Lịch Nha Trang - Digital Passport',
+            'passport' => $passport,
+            'history'  => $history
+        ]);
+    }
+
     public function searchSuggest(): void
     {
         header('Content-Type: application/json; charset=utf-8');
