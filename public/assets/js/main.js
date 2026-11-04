@@ -700,7 +700,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btnLocate) return;
 
         function applyUserPosition(lat, lng, isDemo = false) {
-            userCoords = { lat: lat, lng: lng };
+            userCoords = { lat: lat, lng: lng, isDemo: isDemo };
+            window.userCoords = userCoords;
 
             if (userMarker && map) {
                 map.removeLayer(userMarker);
@@ -1482,6 +1483,87 @@ window.moveTripItem = function(index, direction) {
     window.renderTripModalContent();
 };
 
+// ========================================================
+// HÀM LẤY TỌA ĐỘ GPS CHÍNH XÁC CAO NHẤT (HIGH-ACCURACY GEOLOCATION)
+// ========================================================
+window.layViTriChinhXac = function(callback, forceRefresh = false) {
+    const labelEl = document.getElementById('trip-start-point-label');
+
+    // 1. Nếu đã có tọa độ GPS thật và không yêu cầu refresh cưỡng bức
+    if (!forceRefresh && window.userCoords && !window.userCoords.isDemo) {
+        if (labelEl) {
+            const acc = window.userCoords.accuracy ? ` &bull; Sai số ±${window.userCoords.accuracy}m` : '';
+            labelEl.innerHTML = `<span class="text-success"><i class="bi bi-broadcast me-1"></i>Vị trí GPS của bạn (${window.userCoords.lat.toFixed(4)}, ${window.userCoords.lng.toFixed(4)})${acc}</span>`;
+        }
+        if (typeof callback === 'function') callback(window.userCoords);
+        return;
+    }
+
+    if (labelEl) {
+        labelEl.innerHTML = '<span class="text-primary"><span class="spinner-border spinner-border-sm me-1" style="width: 12px; height: 12px;"></span>Đang lấy GPS chính xác từ thiết bị...</span>';
+    }
+
+    if (!navigator.geolocation) {
+        const fallback = { lat: 12.2388, lng: 109.1961, isDemo: true, note: 'Trình duyệt không hỗ trợ GPS' };
+        window.userCoords = fallback;
+        if (labelEl) {
+            labelEl.innerHTML = '<span class="text-muted"><i class="bi bi-geo-alt me-1"></i>Trình duyệt không hỗ trợ GPS - Dùng tạm Quảng trường 2/4</span>';
+        }
+        if (typeof callback === 'function') callback(fallback);
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function (pos) {
+            const acc = Math.round(pos.coords.accuracy);
+            const accurateCoords = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                accuracy: acc,
+                isDemo: false,
+                note: `GPS chính xác (sai số ±${acc}m)`
+            };
+            window.userCoords = accurateCoords;
+
+            if (labelEl) {
+                labelEl.innerHTML = `<span class="text-success fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i>GPS của bạn (${accurateCoords.lat.toFixed(4)}, ${accurateCoords.lng.toFixed(4)}) &bull; Sai số ±${acc}m</span>`;
+            }
+
+            if (typeof callback === 'function') callback(accurateCoords);
+        },
+        function (err) {
+            let msg = 'Chưa cấp quyền GPS - Dùng điểm mốc Quảng trường 2/4';
+            if (err.code === 1) {
+                msg = 'Bạn đã chặn quyền truy cập vị trí - Dùng tạm Quảng trường 2/4';
+            } else if (err.code === 2) {
+                msg = 'Thiết bị không bắt được sóng GPS - Dùng tạm Quảng trường 2/4';
+            } else if (err.code === 3) {
+                msg = 'Tìm GPS quá thời gian - Dùng tạm Quảng trường 2/4';
+            }
+
+            const fallback = { lat: 12.2388, lng: 109.1961, isDemo: true, note: msg };
+            window.userCoords = fallback;
+
+            if (labelEl) {
+                labelEl.innerHTML = `<span class="text-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>${msg}</span>`;
+            }
+
+            if (typeof callback === 'function') callback(fallback);
+        },
+        {
+            enableHighAccuracy: true, // Kích hoạt chip GPS độ chính xác cao nhất
+            timeout: 10000,           // Chờ 10 giây
+            maximumAge: 0             // Không dùng cache cũ
+        }
+    );
+};
+
+window.refreshGPSAndTrip = function(btn) {
+    window.layViTriChinhXac(function(coords) {
+        window.renderTripModalContent(coords);
+    }, true);
+};
+
 // Thuật toán tối ưu hóa thứ tự gần nhất (Nearest-Neighbor TSP Algorithm)
 window.optimizeTripOrder = function() {
     if (window.tripSelectedLocations.length <= 1) {
@@ -1489,54 +1571,53 @@ window.optimizeTripOrder = function() {
         return;
     }
 
-    let startLat = 12.2388;
-    let startLng = 109.1961;
-    if (window.userCoords) {
-        startLat = window.userCoords.lat;
-        startLng = window.userCoords.lng;
-    }
+    window.layViTriChinhXac(function(coords) {
+        let startLat = coords.lat;
+        let startLng = coords.lng;
 
-    const unvisited = [...window.tripSelectedLocations];
-    const optimized = [];
-    let currentLat = startLat;
-    let currentLng = startLng;
+        const unvisited = [...window.tripSelectedLocations];
+        const optimized = [];
+        let currentLat = startLat;
+        let currentLng = startLng;
 
-    // Helper Haversine nội bộ nếu chưa có
-    function distCalc(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    while (unvisited.length > 0) {
-        let nearestIndex = 0;
-        let minDistance = Infinity;
-
-        for (let i = 0; i < unvisited.length; i++) {
-            const d = distCalc(currentLat, currentLng, unvisited[i].lat, unvisited[i].lng);
-            if (d < minDistance) {
-                minDistance = d;
-                nearestIndex = i;
-            }
+        function distCalc(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        const nextPoint = unvisited.splice(nearestIndex, 1)[0];
-        optimized.push(nextPoint);
-        currentLat = nextPoint.lat;
-        currentLng = nextPoint.lng;
-    }
+        while (unvisited.length > 0) {
+            let nearestIndex = 0;
+            let minDistance = Infinity;
 
-    window.tripSelectedLocations = optimized;
-    window.saveTripLocations();
-    window.renderTripModalContent();
-    alert('⚡ ĐÃ TỐI ƯU HÓA!\nThứ tự các chặng đã được thuật toán tự động sắp xếp theo khoảng cách gần nhất, giảm thiểu tối đa tình trạng đi vòng lặp.');
+            for (let i = 0; i < unvisited.length; i++) {
+                const d = distCalc(currentLat, currentLng, unvisited[i].lat, unvisited[i].lng);
+                if (d < minDistance) {
+                    minDistance = d;
+                    nearestIndex = i;
+                }
+            }
+
+            const nextPoint = unvisited.splice(nearestIndex, 1)[0];
+            optimized.push(nextPoint);
+            currentLat = nextPoint.lat;
+            currentLng = nextPoint.lng;
+        }
+
+        window.tripSelectedLocations = optimized;
+        window.saveTripLocations();
+        window.renderTripModalContent(coords);
+
+        const pointName = coords.isDemo ? 'điểm mốc Quảng trường 2/4' : `vị trí GPS chính xác của bạn (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+        alert(`⚡ ĐÃ TỐI ƯU HÓA LỘ TRÌNH!\nThứ tự các chặng đã được thuật toán sắp xếp tối ưu bắt đầu từ ${pointName}, giúp tiết kiệm tối đa thời gian và chi phí xăng xe.`);
+    });
 };
 
-window.renderTripModalContent = function() {
+window.renderTripModalContent = function(explicitCoords = null) {
     const list = window.tripSelectedLocations || [];
     const container = document.getElementById('trip-stops-list');
     const stopCountEl = document.getElementById('trip-modal-stop-count');
@@ -1604,12 +1685,10 @@ window.renderTripModalContent = function() {
 
     container.innerHTML = html;
 
-    let startLat = 12.2388;
-    let startLng = 109.1961;
-    if (window.userCoords) {
-        startLat = window.userCoords.lat;
-        startLng = window.userCoords.lng;
-    }
+    // Lấy tọa độ xuất phát chính xác nhất
+    const coords = explicitCoords || window.userCoords || { lat: 12.2388, lng: 109.1961, isDemo: true };
+    let startLat = coords.lat;
+    let startLng = coords.lng;
 
     function distCalc(lat1, lon1, lat2, lon2) {
         const R = 6371;
@@ -1648,7 +1727,9 @@ window.renderTripModalContent = function() {
 };
 
 window.openTripModal = function() {
-    window.renderTripModalContent();
+    window.layViTriChinhXac(function(coords) {
+        window.renderTripModalContent(coords);
+    });
     const modalEl = document.getElementById('tripPlannerModal');
     if (modalEl && typeof bootstrap !== 'undefined') {
         const modal = new bootstrap.Modal(modalEl);
@@ -1669,101 +1750,101 @@ window.drawMultiRouteOnMap = function() {
         if (modalInstance) modalInstance.hide();
     }
 
-    let startLat = 12.2388;
-    let startLng = 109.1961;
-    if (window.userCoords) {
-        startLat = window.userCoords.lat;
-        startLng = window.userCoords.lng;
-    }
+    window.layViTriChinhXac(function(coords) {
+        let startLat = coords.lat;
+        let startLng = coords.lng;
 
-    const coordParts = [`${startLng},${startLat}`];
-    list.forEach(pt => {
-        coordParts.push(`${pt.lng},${pt.lat}`);
-    });
+        const coordParts = [`${startLng},${startLat}`];
+        list.forEach(pt => {
+            coordParts.push(`${pt.lng},${pt.lat}`);
+        });
 
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordParts.join(';')}?overview=full&geometries=geojson&steps=false`;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordParts.join(';')}?overview=full&geometries=geojson&steps=false`;
 
-    fetch(osrmUrl)
-        .then(res => res.json())
-        .then(data => {
-            if (!data.routes || data.routes.length === 0) {
-                alert('Không thể tìm thấy tuyến đường nối các điểm này qua OSRM.');
-                return;
-            }
-
-            const route = data.routes[0];
-            const coordinates = route.geometry.coordinates.map(c => [c[1], c[0]]);
-
-            if (multiRouteLayerGroup && window.mapInstance) {
-                window.mapInstance.removeLayer(multiRouteLayerGroup);
-            }
-            multiRouteLayerGroup = L.layerGroup();
-
-            const casing = L.polyline(coordinates, {
-                color: '#ffffff',
-                weight: 8,
-                opacity: 0.95,
-                lineJoin: 'round'
-            });
-
-            const line = L.polyline(coordinates, {
-                color: '#f97316',
-                weight: 5,
-                opacity: 0.95,
-                lineJoin: 'round',
-                dashArray: '8, 6'
-            });
-
-            multiRouteLayerGroup.addLayer(casing);
-            multiRouteLayerGroup.addLayer(line);
-
-            const startMarker = L.circleMarker([startLat, startLng], {
-                radius: 8,
-                fillColor: '#0284c7',
-                color: '#ffffff',
-                weight: 3,
-                opacity: 1,
-                fillOpacity: 1
-            }).bindPopup('<strong>Điểm xuất phát</strong><br><small class="text-muted">(Vị trí hiện tại / Quảng trường 2/4)</small>');
-            multiRouteLayerGroup.addLayer(startMarker);
-
-            list.forEach((item, index) => {
-                const num = index + 1;
-                const numberIcon = L.divIcon({
-                    className: 'custom-trip-marker',
-                    html: `
-                        <div style="background: #ea580c; color: #fff; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
-                            ${num}
-                        </div>
-                    `,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16],
-                    popupAnchor: [0, -16]
-                });
-
-                function fmtMoney(num) {
-                    num = parseFloat(num) || 0;
-                    if (num <= 0) return 'Miễn phí';
-                    return num.toLocaleString('vi-VN') + ' đ';
+        fetch(osrmUrl)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.routes || data.routes.length === 0) {
+                    alert('Không thể tìm thấy tuyến đường nối các điểm này qua OSRM.');
+                    return;
                 }
 
-                const m = L.marker([item.lat, item.lng], { icon: numberIcon })
-                    .bindPopup(`<strong>Chặng ${num}: ${item.title}</strong><br><small class="text-muted">Vé: ${fmtMoney(item.price)}</small>`);
-                multiRouteLayerGroup.addLayer(m);
+                const route = data.routes[0];
+                const coordinates = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+                if (multiRouteLayerGroup && window.mapInstance) {
+                    window.mapInstance.removeLayer(multiRouteLayerGroup);
+                }
+                multiRouteLayerGroup = L.layerGroup();
+
+                const casing = L.polyline(coordinates, {
+                    color: '#ffffff',
+                    weight: 8,
+                    opacity: 0.95,
+                    lineJoin: 'round'
+                });
+
+                const line = L.polyline(coordinates, {
+                    color: '#f97316',
+                    weight: 5,
+                    opacity: 0.95,
+                    lineJoin: 'round',
+                    dashArray: '8, 6'
+                });
+
+                multiRouteLayerGroup.addLayer(casing);
+                multiRouteLayerGroup.addLayer(line);
+
+                const startTitle = coords.isDemo ? 'Điểm xuất phát: Quảng trường 2/4 (Chưa cấp quyền GPS)' : `Điểm xuất phát: Vị trí GPS của bạn (Sai số ±${coords.accuracy || 10}m)`;
+                const startMarker = L.circleMarker([startLat, startLng], {
+                    radius: 9,
+                    fillColor: '#0284c7',
+                    color: '#ffffff',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).bindPopup(`<strong>${startTitle}</strong><br><small class="text-muted">Tọa độ: ${startLat.toFixed(5)}, ${startLng.toFixed(5)}</small>`);
+                multiRouteLayerGroup.addLayer(startMarker);
+
+                list.forEach((item, index) => {
+                    const num = index + 1;
+                    const numberIcon = L.divIcon({
+                        className: 'custom-trip-marker',
+                        html: `
+                            <div style="background: #ea580c; color: #fff; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                                ${num}
+                            </div>
+                        `,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16],
+                        popupAnchor: [0, -16]
+                    });
+
+                    function fmtMoney(num) {
+                        num = parseFloat(num) || 0;
+                        if (num <= 0) return 'Miễn phí';
+                        return num.toLocaleString('vi-VN') + ' đ';
+                    }
+
+                    const m = L.marker([item.lat, item.lng], { icon: numberIcon })
+                        .bindPopup(`<strong>Chặng ${num}: ${item.title}</strong><br><small class="text-muted">Vé: ${fmtMoney(item.price)}</small>`);
+                    multiRouteLayerGroup.addLayer(m);
+                });
+
+                if (window.mapInstance) {
+                    multiRouteLayerGroup.addTo(window.mapInstance);
+                    window.mapInstance.fitBounds(line.getBounds(), { padding: [50, 50] });
+                }
+
+                const totalKm = (route.distance / 1000).toFixed(1);
+                const totalMins = Math.round(route.duration / 60);
+                const startOriginDesc = coords.isDemo ? 'Quảng trường 2/4 (Chưa cấp quyền GPS)' : `Vị trí GPS thực tế (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+                alert(`🗺️ ĐÃ VẼ LỘ TRÌNH ĐA ĐIỂM!\nXuất phát: ${startOriginDesc}\nTổng quãng đường: ${totalKm} km\nThời gian lái xe: ${totalMins} phút\nĐường đi qua ${list.length} chặng đã được đánh số thứ tự trên bản đồ.`);
+            })
+            .catch(err => {
+                alert('Lỗi khi gọi máy chủ định tuyến OSRM.');
             });
-
-            if (window.mapInstance) {
-                multiRouteLayerGroup.addTo(window.mapInstance);
-                window.mapInstance.fitBounds(line.getBounds(), { padding: [50, 50] });
-            }
-
-            const totalKm = (route.distance / 1000).toFixed(1);
-            const totalMins = Math.round(route.duration / 60);
-            alert(`🗺️ ĐÃ VẼ LỘ TRÌNH ĐA ĐIỂM!\nTổng quãng đường: ${totalKm} km\nThời gian lái xe dự kiến: ${totalMins} phút\nĐường đi qua ${list.length} chặng đã được đánh số thứ tự trên bản đồ.`);
-        })
-        .catch(err => {
-            alert('Lỗi khi gọi máy chủ định tuyến OSRM.');
-        });
+    });
 };
 
 window.toggleTheme = function() {

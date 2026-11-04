@@ -307,9 +307,12 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
             <div class="modal-body px-4 py-3">
                 <!-- Thanh công cụ tối ưu & điều khiển -->
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-2.5 bg-light rounded-3 mb-3 border">
-                    <div class="small fw-semibold text-secondary d-flex align-items-center gap-1">
-                        <i class="bi bi-geo-alt-fill text-danger"></i>
-                        <span>Xuất phát: <strong>Vị trí của bạn / Quảng trường 2/4</strong></span>
+                    <div class="small fw-semibold text-secondary d-flex align-items-center gap-1.5" id="trip-start-point-box">
+                        <i class="bi bi-geo-alt-fill text-danger fs-6"></i>
+                        <span id="trip-start-point-label">Đang lấy tọa độ GPS chính xác của bạn...</span>
+                        <button type="button" class="btn btn-sm btn-link p-0 text-primary small text-decoration-none ms-1" onclick="window.refreshGPSAndTrip(this)" title="Cập nhật lại GPS tức thì">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-1 shadow-2xs" onclick="window.optimizeTripOrder()">
