@@ -8,7 +8,7 @@ class LangHelper
     private static ?string $currentLang = null;
 
     /**
-     * Lấy ngôn ngữ hiện tại của người dùng (mặc định 'vi')
+     * Lấy ngôn ngữ hiện tại của người dùng (mặc định 'vi', hỗ trợ mã ngôn ngữ quốc tế IETF)
      */
     public static function getLang(): string
     {
@@ -17,7 +17,12 @@ class LangHelper
         }
 
         if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['app_lang'])) {
-            self::$currentLang = in_array($_SESSION['app_lang'], ['vi', 'en']) ? $_SESSION['app_lang'] : 'vi';
+            $code = trim((string)$_SESSION['app_lang']);
+            self::$currentLang = preg_match('/^[a-z]{2,3}(-[a-zA-Z]{2,4})?$/', $code) ? $code : 'vi';
+        } elseif (!empty($_COOKIE['googtrans'])) {
+            $parts = explode('/', trim((string)$_COOKIE['googtrans'], '/'));
+            $code = end($parts);
+            self::$currentLang = ($code && preg_match('/^[a-z]{2,3}(-[a-zA-Z]{2,4})?$/', $code)) ? $code : 'vi';
         } else {
             self::$currentLang = 'vi';
         }
@@ -26,11 +31,14 @@ class LangHelper
     }
 
     /**
-     * Thiết lập ngôn ngữ
+     * Thiết lập ngôn ngữ cho phiên làm việc (hỗ trợ tất cả mã ngôn ngữ trên thế giới)
      */
     public static function setLang(string $lang): void
     {
-        $lang = in_array($lang, ['vi', 'en']) ? $lang : 'vi';
+        $lang = trim($lang);
+        if (!preg_match('/^[a-z]{2,3}(-[a-zA-Z]{2,4})?$/', $lang)) {
+            $lang = 'vi';
+        }
         self::$currentLang = $lang;
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION['app_lang'] = $lang;
@@ -56,4 +64,3 @@ class LangHelper
         return self::$translations[$lang][$key] ?? ($default !== null ? $default : $key);
     }
 }
-

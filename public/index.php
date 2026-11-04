@@ -27,6 +27,7 @@ Router::get('/gioi-thieu', [HomeController::class, 'about']);
 Router::get('/about', [HomeController::class, 'about']);
 Router::get('/huong-dan', [HomeController::class, 'guide']);
 Router::get('/guide', [HomeController::class, 'guide']);
+Router::get('/lang/{code}', [HomeController::class, 'changeLanguage']);
 Router::get('/locations', [LocationController::class, 'index']);
 Router::get('/ai-tour', [AiTourController::class, 'index']);
 Router::post('/api/ai/chat', [AiTourController::class, 'apiChat']);
@@ -115,4 +116,3 @@ Router::get('/admin/reports/export-csv', [ReportController::class, 'exportCsv'])
 
 // Điều phối yêu cầu HTTP
 Router::dispatch();
-

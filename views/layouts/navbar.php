@@ -52,6 +52,21 @@
                         <span class="theme-label-nav small fw-semibold">Tối</span>
                     </button>
                 </li>
+                <!-- Nút Chuyển Đổi Ngôn Ngữ Toàn Cầu (All Countries Language Selector) -->
+                <li class="nav-item flex-shrink-0 ms-lg-1">
+                    <button type="button" 
+                            id="langSelectorBtn" 
+                            class="lang-select-nav-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#languageSelectModal" 
+                            aria-label="Chọn ngôn ngữ / Select Language" 
+                            title="Chọn ngôn ngữ toàn cầu / Select Language">
+                        <i class="bi bi-translate text-info"></i>
+                        <span id="currentLangFlag">🇻🇳</span>
+                        <span id="currentLangLabel" class="small fw-semibold d-none d-xl-inline">Tiếng Việt</span>
+                        <i class="bi bi-chevron-down ms-1" style="font-size: 9px; opacity: 0.7;"></i>
+                    </button>
+                </li>
             </ul>
 
             <div class="d-flex align-items-center gap-2 flex-nowrap flex-shrink-0 ms-auto">
@@ -106,6 +121,8 @@
         </div>
     </div>
 </nav>
+
+<?php require_once __DIR__ . '/language_modal.php'; ?>
 
 <!-- Thông báo Flash Messages -->
 <?php if ($success = flash('success')): ?>

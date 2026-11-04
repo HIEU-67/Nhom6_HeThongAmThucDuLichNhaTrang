@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Helpers\LangHelper;
 use App\Models\DanhMuc;
 use App\Models\DiaDiem;
 use App\Models\GoiVe;
@@ -110,5 +111,24 @@ class HomeController
         view('client.home.guide', [
             'title' => 'Hướng Dẫn Sử Dụng Nền Tảng - Nha Trang Staycation'
         ]);
+    }
+
+    /**
+     * Chuyển đổi ngôn ngữ toàn cầu (hỗ trợ tất cả quốc gia)
+     */
+    public function changeLanguage(string $code): void
+    {
+        LangHelper::setLang($code);
+        $validCode = LangHelper::getLang();
+
+        if ($validCode === 'vi') {
+            setcookie('googtrans', '', time() - 3600, '/');
+        } else {
+            setcookie('googtrans', '/vi/' . $validCode, time() + 86400 * 30, '/');
+        }
+
+        $referer = $_SERVER['HTTP_REFERER'] ?? url('');
+        header('Location: ' . $referer);
+        exit;
     }
 }
