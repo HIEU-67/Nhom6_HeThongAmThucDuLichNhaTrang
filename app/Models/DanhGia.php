@@ -121,12 +121,19 @@ class DanhGia
         $params = [];
 
         if (!empty($filters['tu_khoa'])) {
-            $sql .= " AND (nd.ho_ten LIKE :tk_user OR nd.email LIKE :tk_email OR dd.ten_dia_diem LIKE :tk_dd OR dg.noi_dung LIKE :tk_nd)";
-            $pattern = '%' . $filters['tu_khoa'] . '%';
+            $kw = trim($filters['tu_khoa']);
+            $pattern = '%' . $kw . '%';
             $params['tk_user']  = $pattern;
             $params['tk_email'] = $pattern;
             $params['tk_dd']    = $pattern;
             $params['tk_nd']    = $pattern;
+
+            if (preg_match('/^#?(\d+)$/', $kw, $m)) {
+                $sql .= " AND (nd.ho_ten LIKE :tk_user OR nd.email LIKE :tk_email OR dd.ten_dia_diem LIKE :tk_dd OR dg.noi_dung LIKE :tk_nd OR dg.id = :tk_id)";
+                $params['tk_id'] = (int)$m[1];
+            } else {
+                $sql .= " AND (nd.ho_ten LIKE :tk_user OR nd.email LIKE :tk_email OR dd.ten_dia_diem LIKE :tk_dd OR dg.noi_dung LIKE :tk_nd)";
+            }
         }
 
         if (!empty($filters['trang_thai'])) {
@@ -166,12 +173,19 @@ class DanhGia
         $params = [];
 
         if (!empty($filters['tu_khoa'])) {
-            $sql .= " AND (nd.ho_ten LIKE :tk_user OR nd.email LIKE :tk_email OR dd.ten_dia_diem LIKE :tk_dd OR dg.noi_dung LIKE :tk_nd)";
-            $pattern = '%' . $filters['tu_khoa'] . '%';
+            $kw = trim($filters['tu_khoa']);
+            $pattern = '%' . $kw . '%';
             $params['tk_user']  = $pattern;
             $params['tk_email'] = $pattern;
             $params['tk_dd']    = $pattern;
             $params['tk_nd']    = $pattern;
+
+            if (preg_match('/^#?(\d+)$/', $kw, $m)) {
+                $sql .= " AND (nd.ho_ten LIKE :tk_user OR nd.email LIKE :tk_email OR dd.ten_dia_diem LIKE :tk_dd OR dg.noi_dung LIKE :tk_nd OR dg.id = :tk_id)";
+                $params['tk_id'] = (int)$m[1];
+            } else {
+                $sql .= " AND (nd.ho_ten LIKE :tk_user OR nd.email LIKE :tk_email OR dd.ten_dia_diem LIKE :tk_dd OR dg.noi_dung LIKE :tk_nd)";
+            }
         }
 
         if (!empty($filters['trang_thai'])) {

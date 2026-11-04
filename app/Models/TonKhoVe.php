@@ -80,7 +80,7 @@ class TonKhoVe
     /**
      * Đếm tổng số bản ghi tồn kho theo ngày
      */
-    public function demDanhSach(?string $ngay = null): int
+    public function demDanhSach(?string $ngay = null, ?string $tuKhoa = null): int
     {
         $sql = "
             SELECT COUNT(tk.id)
@@ -96,6 +96,13 @@ class TonKhoVe
             $params['ngay'] = $ngay;
         }
 
+        if (!empty($tuKhoa)) {
+            $sql .= " AND (gv.ten_goi_ve LIKE :tk_gv OR dd.ten_dia_diem LIKE :tk_dd)";
+            $pattern = '%' . trim($tuKhoa) . '%';
+            $params['tk_gv'] = $pattern;
+            $params['tk_dd'] = $pattern;
+        }
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
@@ -104,7 +111,7 @@ class TonKhoVe
     /**
      * Lấy danh sách tồn kho vé theo ngày có phân trang cho Admin
      */
-    public function layDanhSachPhanTrang(int $page = 1, int $perPage = 10, ?string $ngay = null): array
+    public function layDanhSachPhanTrang(int $page = 1, int $perPage = 10, ?string $ngay = null, ?string $tuKhoa = null): array
     {
         $sql = "
             SELECT tk.*, gv.ten_goi_ve, gv.gia_nguoi_lon, gv.gia_tre_em, dd.ten_dia_diem
@@ -118,6 +125,13 @@ class TonKhoVe
         if (!empty($ngay)) {
             $sql .= " AND tk.ngay_su_dung = :ngay";
             $params['ngay'] = $ngay;
+        }
+
+        if (!empty($tuKhoa)) {
+            $sql .= " AND (gv.ten_goi_ve LIKE :tk_gv OR dd.ten_dia_diem LIKE :tk_dd)";
+            $pattern = '%' . trim($tuKhoa) . '%';
+            $params['tk_gv'] = $pattern;
+            $params['tk_dd'] = $pattern;
         }
 
         $page = max(1, $page);

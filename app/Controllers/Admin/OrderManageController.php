@@ -24,11 +24,44 @@ class OrderManageController
         $params = [];
 
         if (!empty($tuKhoa)) {
-            $baseWhere .= " AND (dh.ma_don_hang LIKE :q_ma OR dh.sdt_khach_hang LIKE :q_sdt OR dh.ten_khach_hang LIKE :q_ten OR dh.email_khach_hang LIKE :q_email)";
-            $params['q_ma']    = '%' . $tuKhoa . '%';
-            $params['q_sdt']   = '%' . $tuKhoa . '%';
-            $params['q_ten']   = '%' . $tuKhoa . '%';
-            $params['q_email'] = '%' . $tuKhoa . '%';
+            // Chuẩn hóa từ khóa tìm kiếm: loại bỏ khoảng trắng / ký tự điều khiển từ máy quét QR
+            $cleanKw = trim($tuKhoa);
+            $searchPattern = '%' . $cleanKw . '%';
+
+            $clauses = [
+                "dh.ma_don_hang LIKE :q_ma",
+                "dh.ma_qr LIKE :q_qr",
+                "dh.sdt_khach_hang LIKE :q_sdt",
+                "dh.ten_khach_hang LIKE :q_ten",
+                "dh.email_khach_hang LIKE :q_email"
+            ];
+            $params['q_ma']    = $searchPattern;
+            $params['q_qr']    = $searchPattern;
+            $params['q_sdt']   = $searchPattern;
+            $params['q_ten']   = $searchPattern;
+            $params['q_email'] = $searchPattern;
+
+            // Nếu người dùng quét URL E-Voucher (ví dụ: http://localhost:8080/voucher/NT26102830A669)
+            // hoặc chuỗi chứa mã đơn NT...
+            $extractedCode = '';
+            if (preg_match('/voucher\/([A-Za-z0-9_\-]+)/i', $cleanKw, $m)) {
+                $extractedCode = $m[1];
+            } elseif (preg_match('/(NT[A-Za-z0-9]+)/i', $cleanKw, $m)) {
+                $extractedCode = $m[1];
+            }
+
+            if (!empty($extractedCode) && strcasecmp($extractedCode, $cleanKw) !== 0) {
+                $clauses[] = "dh.ma_don_hang LIKE :q_ma_ext";
+                $params['q_ma_ext'] = '%' . $extractedCode . '%';
+            }
+
+            // Nếu nhập ID số (ví dụ #5 hoặc 5)
+            if (preg_match('/^#?(\d+)$/', $cleanKw, $m)) {
+                $clauses[] = "dh.id = :q_id";
+                $params['q_id'] = (int)$m[1];
+            }
+
+            $baseWhere .= " AND (" . implode(' OR ', $clauses) . ")";
         }
 
         if (!empty($trangThaiDon)) {

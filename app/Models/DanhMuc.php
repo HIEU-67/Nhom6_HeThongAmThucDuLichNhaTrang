@@ -59,8 +59,16 @@ class DanhMuc
         $params = [];
 
         if (!empty($filters['tu_khoa'])) {
-            $sql .= " AND (dm.ten_danh_muc LIKE :tk OR dm.duong_dan LIKE :tk)";
-            $params['tk'] = '%' . $filters['tu_khoa'] . '%';
+            $kw = trim($filters['tu_khoa']);
+            $pattern = '%' . $kw . '%';
+            $params['tk_ten'] = $pattern;
+            $params['tk_slug'] = $pattern;
+            if (preg_match('/^#?(\d+)$/', $kw, $m)) {
+                $sql .= " AND (dm.ten_danh_muc LIKE :tk_ten OR dm.duong_dan LIKE :tk_slug OR dm.id = :tk_id)";
+                $params['tk_id'] = (int)$m[1];
+            } else {
+                $sql .= " AND (dm.ten_danh_muc LIKE :tk_ten OR dm.duong_dan LIKE :tk_slug)";
+            }
         }
 
         if (!empty($filters['loai'])) {
@@ -90,8 +98,16 @@ class DanhMuc
         $params = [];
 
         if (!empty($filters['tu_khoa'])) {
-            $sql .= " AND (dm.ten_danh_muc LIKE :tk OR dm.duong_dan LIKE :tk)";
-            $params['tk'] = '%' . $filters['tu_khoa'] . '%';
+            $kw = trim($filters['tu_khoa']);
+            $pattern = '%' . $kw . '%';
+            $params['tk_ten'] = $pattern;
+            $params['tk_slug'] = $pattern;
+            if (preg_match('/^#?(\d+)$/', $kw, $m)) {
+                $sql .= " AND (dm.ten_danh_muc LIKE :tk_ten OR dm.duong_dan LIKE :tk_slug OR dm.id = :tk_id)";
+                $params['tk_id'] = (int)$m[1];
+            } else {
+                $sql .= " AND (dm.ten_danh_muc LIKE :tk_ten OR dm.duong_dan LIKE :tk_slug)";
+            }
         }
 
         if (!empty($filters['loai'])) {
