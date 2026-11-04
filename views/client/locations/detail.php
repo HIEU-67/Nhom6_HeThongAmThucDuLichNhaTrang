@@ -111,11 +111,16 @@ if ($hasTickets) {
 
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                         <h1 class="h2 fw-bold text-dark mb-0"><?= htmlspecialchars($diaDiem['ten_dia_diem']) ?></h1>
-                        <?php if (!empty($daCheckInHomNay)): ?>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 12px;">
-                                <i class="bi bi-patch-check-fill me-1"></i>Đã đóng dấu hôm nay (+50đ)
-                            </span>
-                        <?php endif; ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-2xs" id="btnDetailAddToTrip" onclick="toggleDetailTripLocation(<?= (int)$diaDiem['id'] ?>, '<?= addslashes(htmlspecialchars($diaDiem['ten_dia_diem'])) ?>', <?= (float)$diaDiem['vi_do'] ?>, <?= (float)$diaDiem['kinh_do'] ?>, <?= (float)$diaDiem['gia_thap_nhat'] ?>)">
+                                <i class="bi bi-pin-map me-1"></i><span id="detailTripBtnText">Thêm vào Lộ trình</span>
+                            </button>
+                            <?php if (!empty($daCheckInHomNay)): ?>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 12px;">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Đã đóng dấu hôm nay (+50đ)
+                                </span>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <!-- THUYẾT MINH VIÊN GIỌNG NÓI TỰ ĐỘNG (AUDIO GUIDE - $0 API) -->
@@ -1597,6 +1602,50 @@ if ($hasTickets) {
             toggleAudioGuide();
         }
     }
+
+    // ========================================================
+    // TÍNH NĂNG MỚI: THÊM / XÓA ĐỊA ĐIỂM VÀO LỘ TRÌNH ĐA ĐIỂM
+    // ========================================================
+    function toggleDetailTripLocation(id, title, lat, lng, price) {
+        let trip = JSON.parse(localStorage.getItem('nhatrang_trip_planner') || '[]');
+        const idx = trip.findIndex(item => item.id === id);
+        const btnText = document.getElementById('detailTripBtnText');
+        const btn = document.getElementById('btnDetailAddToTrip');
+
+        if (idx > -1) {
+            trip.splice(idx, 1);
+            localStorage.setItem('nhatrang_trip_planner', JSON.stringify(trip));
+            if (btnText) btnText.textContent = 'Thêm vào Lộ trình';
+            if (btn) {
+                btn.className = 'btn btn-outline-warning btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-2xs';
+                btn.querySelector('i').className = 'bi bi-pin-map me-1';
+            }
+            alert('Đã xóa "' + title + '" khỏi kế hoạch lộ trình du lịch.');
+        } else {
+            trip.push({ id, title, lat, lng, price });
+            localStorage.setItem('nhatrang_trip_planner', JSON.stringify(trip));
+            if (btnText) btnText.textContent = 'Đã có trong Lộ trình';
+            if (btn) {
+                btn.className = 'btn btn-warning btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-2xs';
+                btn.querySelector('i').className = 'bi bi-check2-circle me-1';
+            }
+            alert('🎉 ĐÃ THÊM VÀO LỘ TRÌNH ĐA ĐIỂM!\nBạn có thể quay lại trang Bản Đồ để xem tuyến đường nối liên hoàn và dự toán chi phí.');
+        }
+    }
+
+    // Khởi tạo trạng thái nút Lộ trình
+    (function() {
+        const trip = JSON.parse(localStorage.getItem('nhatrang_trip_planner') || '[]');
+        const locId = <?= (int)$diaDiem['id'] ?>;
+        const exists = trip.some(item => item.id === locId);
+        const btnText = document.getElementById('detailTripBtnText');
+        const btn = document.getElementById('btnDetailAddToTrip');
+        if (exists && btn && btnText) {
+            btnText.textContent = 'Đã có trong Lộ trình';
+            btn.className = 'btn btn-warning btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-2xs';
+            btn.querySelector('i').className = 'bi bi-check2-circle me-1';
+        }
+    })();
 
     function closeDetailRouting() {
         const panel = document.getElementById('detail-osrm-panel');
