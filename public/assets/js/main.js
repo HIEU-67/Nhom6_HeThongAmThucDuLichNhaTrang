@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
             zoomControl: true,
             scrollWheelZoom: true
         }).setView([12.2475, 109.1967], 13);
+        window.mapInstance = map;
 
         // Tạo lớp nền bản đồ dựa trên cấu hình MAP_PROVIDER và MAP_API_KEY
         const primaryTileLayer = taoTileLayer();
@@ -495,6 +496,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
                                 <span class="location-card-price">${giaFormatted}</span>
                                 <div class="d-flex gap-1" onclick="event.stopPropagation();">
+                                    <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1 btn-trip-action-${item.id}" onclick="window.toggleTripLocation(${item.id}, '${safeTitle.replace(/'/g, "\\'")}', ${item.vi_do}, ${item.kinh_do}, ${item.gia_thap_nhat || 0})" title="Thêm vào lộ trình đa điểm">
+                                        <i class="bi bi-pin-map"></i> Lộ trình
+                                    </button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" onclick="focusOnMap(${item.id}, ${item.vi_do}, ${item.kinh_do})" title="Xem vị trí trên bản đồ">
                                         <i class="bi bi-geo-alt"></i>
                                     </button>
@@ -513,6 +517,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         container.innerHTML = html;
+        if (typeof window.updateTripUI === 'function') {
+            window.updateTripUI();
+        }
     }
 
     // 9. Tập trung vào bản đồ khi click thẻ (Bidirectional Interaction)
@@ -695,7 +702,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btnLocate) return;
 
         function applyUserPosition(lat, lng, isDemo = false) {
-            userCoords = { lat: lat, lng: lng };
+            userCoords = { lat: lat, lng: lng, isDemo: isDemo };
+            window.userCoords = userCoords;
 
             if (userMarker && map) {
                 map.removeLayer(userMarker);
@@ -1448,8 +1456,13 @@ window.toggleTheme = function() {
 (function() {
     const currentTheme = document.documentElement.getAttribute('data-bs-theme') || localStorage.getItem('nhatrang_theme') || 'light';
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.updateThemeUI(currentTheme));
+        document.addEventListener('DOMContentLoaded', () => {
+            window.updateThemeUI(currentTheme);
+        if (typeof window.updateTripUI === 'function') window.updateTripUI();
+            if (typeof window.updateTripUI === 'function') window.updateTripUI();
+        });
     } else {
         window.updateThemeUI(currentTheme);
+        if (typeof window.updateTripUI === 'function') window.updateTripUI();
     }
 })();
