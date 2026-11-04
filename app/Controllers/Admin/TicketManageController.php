@@ -25,26 +25,41 @@ class TicketManageController
     {
         AuthMiddleware::checkAdmin();
 
-        $filterNgay = trim($_GET['ngay'] ?? '');
-        $page = max(1, (int)($_GET['page'] ?? 1));
-        $perPage = 10;
+        // 1. Phân trang & bộ lọc Danh sách Gói vé (Cột trái)
+        $tuKhoaPkg = trim($_GET['pkg_q'] ?? '');
+        $pkgPage = max(1, (int)($_GET['pkg_page'] ?? 1));
+        $pkgPerPage = 10;
 
-        // Danh sách toàn bộ gói vé
-        $packages = $this->goiVeModel->layTatCa();
+        $totalPackages = $this->goiVeModel->demTatCa($tuKhoaPkg ?: null);
+        $packages = $this->goiVeModel->layPhanTrang($pkgPage, $pkgPerPage, $tuKhoaPkg ?: null);
+
+        // Toàn bộ danh sách gói vé dùng cho dropdown form hạn mức
+        $allPackages = $this->goiVeModel->layTatCa();
 
         // Danh sách địa điểm có cờ bán vé để chọn khi thêm gói vé
         $ticketLocations = $this->diaDiemModel->danhSachAdmin(['co_ban_ve' => 1]);
 
-        // Danh sách tồn kho theo ngày có phân trang
-        $totalInventories = $this->tonKhoModel->demDanhSach($filterNgay ?: null);
-        $inventories = $this->tonKhoModel->layDanhSachPhanTrang($page, $perPage, $filterNgay ?: null);
+        // 2. Phân trang & bộ lọc Hạn mức Tồn kho theo ngày (Cột phải)
+        $filterNgay = trim($_GET['ngay'] ?? '');
+        $tuKhoa = trim($_GET['q'] ?? '');
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 10;
+
+        $totalInventories = $this->tonKhoModel->demDanhSach($filterNgay ?: null, $tuKhoa ?: null);
+        $inventories = $this->tonKhoModel->layDanhSachPhanTrang($page, $perPage, $filterNgay ?: null, $tuKhoa ?: null);
 
         view('admin.tickets.index', [
             'title'            => 'Quản Lý Gói Vé & Hạn Mức Tồn Kho',
             'packages'         => $packages,
+            'allPackages'      => $allPackages,
+            'totalPackages'    => $totalPackages,
+            'pkgPage'          => $pkgPage,
+            'pkgPerPage'       => $pkgPerPage,
+            'tuKhoaPkg'        => $tuKhoaPkg,
             'ticketLocations'  => $ticketLocations,
             'inventories'      => $inventories,
             'filterNgay'       => $filterNgay,
+            'tuKhoa'           => $tuKhoa,
             'page'             => $page,
             'perPage'          => $perPage,
             'totalInventories' => $totalInventories,

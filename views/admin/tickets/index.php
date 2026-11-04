@@ -5,6 +5,12 @@
  * @var array $packages
  * @var array $inventories
  * @var string|null $filterNgay
+ * @var string|null $tuKhoa
+ * @var array $allPackages
+ * @var int $totalPackages
+ * @var int $pkgPage
+ * @var int $pkgPerPage
+ * @var string|null $tuKhoaPkg
  * @var int|null $page
  * @var int|null $perPage
  * @var int|null $totalInventories
@@ -118,10 +124,21 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
             </form>
         </div>
 
-        <!-- Danh sách gói vé hiện có -->
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="fw-bold mb-0 text-dark">Danh Sách Gói Vé (<?= count($packages) ?> gói)</h5>
+        <!-- Danh sách gói vé hiện có (Có phân trang & tìm kiếm) -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold mb-0 text-dark">Danh Sách Gói Vé (<?= number_format($totalPackages ?? count($packages)) ?> gói)</h5>
+                <form action="<?= url('admin/tickets') ?>" method="GET" class="d-flex gap-2">
+                    <?php if (!empty($filterNgay)): ?><input type="hidden" name="ngay" value="<?= htmlspecialchars($filterNgay) ?>"><?php endif; ?>
+                    <?php if (!empty($tuKhoa)): ?><input type="hidden" name="q" value="<?= htmlspecialchars($tuKhoa) ?>"><?php endif; ?>
+                    <input type="text" name="pkg_q" class="form-control form-control-sm" placeholder="Tìm tên gói vé, địa điểm..." value="<?= htmlspecialchars($tuKhoaPkg ?? '') ?>" style="max-width: 170px;">
+                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill">Lọc</button>
+                    <?php if (!empty($tuKhoaPkg)): ?>
+                        <a href="<?= url('admin/tickets?' . http_build_query(array_diff_key($_GET, ['pkg_q' => '']))) ?>" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa lọc">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    <?php endif; ?>
+                </form>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 small">
@@ -133,7 +150,7 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                             <th class="text-end">Thao Tác</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="packageTableBody">
                         <?php if (empty($packages)): ?>
                             <tr>
                                 <td colspan="4" class="text-center py-4 text-muted">Chưa có gói vé nào.</td>
@@ -169,6 +186,11 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                     </tbody>
                 </table>
             </div>
+
+            <!-- Phân Trang Dữ Liệu Gói Vé -->
+            <div class="pb-3">
+                <?= phan_trang($totalPackages ?? count($packages), $pkgPerPage ?? 10, $pkgPage ?? 1, 'admin/tickets', $_GET, 'pkg_page') ?>
+            </div>
         </div>
     </div>
 
@@ -186,7 +208,7 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
                     <label class="form-label small fw-semibold">Chọn gói vé áp dụng <span class="text-danger">*</span></label>
                     <select name="goi_ve_id" class="form-select" required>
                         <option value="">-- Chọn gói vé --</option>
-                        <?php foreach ($packages as $pkg): ?>
+                        <?php foreach (($allPackages ?? $packages) as $pkg): ?>
                             <option value="<?= $pkg['id'] ?>">
                                 <?= htmlspecialchars($pkg['ten_dia_diem']) ?> - <?= htmlspecialchars($pkg['ten_goi_ve']) ?>
                             </option>
@@ -215,10 +237,11 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold mb-0 text-dark">Hạn Mức Theo Ngày Gần Đây (<?= number_format($totalInventories ?? count($inventories)) ?>)</h5>
-                <form action="<?= url('admin/tickets') ?>" method="GET" class="d-flex gap-2">
+                <form action="<?= url('admin/tickets') ?>" method="GET" class="d-flex flex-wrap gap-2">
+                    <input type="text" name="q" class="form-control form-control-sm" placeholder="Tìm gói vé, địa điểm..." value="<?= htmlspecialchars($tuKhoa ?? '') ?>" style="max-width: 170px;">
                     <input type="date" name="ngay" class="form-control form-control-sm" value="<?= htmlspecialchars($filterNgay ?? '') ?>">
                     <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill">Lọc</button>
-                    <?php if (!empty($filterNgay)): ?>
+                    <?php if (!empty($filterNgay) || !empty($tuKhoa)): ?>
                         <a href="<?= url('admin/tickets') ?>" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa lọc">
                             <i class="bi bi-x-lg"></i>
                         </a>
@@ -280,5 +303,15 @@ require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
     </div>
 </div>
 
+<script>
+function filterPackages(kw) {
+    const term = kw.toLowerCase().trim();
+    const rows = document.querySelectorAll('#packageTableBody tr');
+    rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        r.style.display = text.includes(term) ? '' : 'none';
+    });
+}
+</script>
 <?php require_once dirname(__DIR__, 2) . '/layouts/admin_footer.php'; ?>
 

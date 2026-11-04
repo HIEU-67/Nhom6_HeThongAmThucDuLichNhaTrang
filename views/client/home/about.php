@@ -245,7 +245,7 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
             <!-- 3. Nhà Thờ Núi Nha Trang -->
             <div class="col-lg-6">
                 <div class="card border rounded-4 overflow-hidden h-100 shadow-sm d-flex flex-column flex-md-row">
-                    <img src="https://images.unsplash.com/photo-1548625361-165c711a684b?auto=format&fit=crop&w=600&q=80" alt="Nhà thờ Núi Nha Trang" class="w-100 object-fit-cover" style="min-height: 220px; max-width: 220px;" loading="lazy">
+                    <img src="uploads/locations/loc_20261029_122708_75ca414d.jpeg" alt="Nhà thờ Núi Nha Trang" class="w-100 object-fit-cover" style="min-height: 220px; max-width: 220px;" loading="lazy">
                     <div class="p-4 d-flex flex-column justify-content-between">
                         <div>
                             <span class="badge bg-info-subtle text-info border border-info-subtle small mb-2">Xây dựng 1928 - 1933</span>
