@@ -2436,3 +2436,192 @@ select option,
 
 
 
+
+/* ========================================================
+   20. LANGUAGE SELECTOR (NAVBAR BUTTON & WORLD MODAL)
+   ======================================================== */
+
+/* --- Nút chọn ngôn ngữ trên Navbar --- */
+.lang-select-nav-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast, 0.2s ease);
+    outline: none;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.lang-select-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+    color: #ffffff;
+}
+
+.lang-select-nav-btn:focus {
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.35);
+    outline: none;
+}
+
+[data-bs-theme="dark"] .lang-select-nav-btn {
+    background: rgba(14, 165, 233, 0.18);
+    border-color: rgba(14, 165, 233, 0.4);
+    color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .lang-select-nav-btn:hover {
+    background: rgba(14, 165, 233, 0.28);
+}
+
+/* --- Thanh lọc khu vực (tabs) trong Modal --- */
+.lang-tab-btn {
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    border: 1px solid #dee2e6;
+    background: #ffffff;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.lang-tab-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.lang-tab-btn.active {
+    background: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+[data-bs-theme="dark"] .language-filter-bar {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .language-modal-content {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .language-modal-content .modal-footer {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .lang-tab-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-bs-theme="dark"] .lang-tab-btn:hover {
+    background: #334155;
+    border-color: #475569;
+}
+
+[data-bs-theme="dark"] .lang-tab-btn.active {
+    background: #0ea5e9 !important;
+    border-color: #0ea5e9 !important;
+    color: #ffffff !important;
+}
+
+/* --- Thẻ ngôn ngữ đơn lẻ (.lang-card) --- */
+.lang-card {
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: #ffffff;
+    border-color: #e2e8f0 !important;
+}
+
+.lang-card:hover {
+    border-color: #0b5ed7 !important;
+    background: #f0f6ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 94, 215, 0.12);
+}
+
+.lang-card.active-lang {
+    border-color: #0b5ed7 !important;
+    background: #dbeafe;
+    box-shadow: 0 0 0 2px rgba(11, 94, 215, 0.25);
+}
+
+[data-bs-theme="dark"] .lang-card {
+    background: #0f172a;
+    border-color: #334155 !important;
+    color: #f1f5f9;
+}
+
+[data-bs-theme="dark"] .lang-card:hover {
+    border-color: #0ea5e9 !important;
+    background: #0f2744;
+}
+
+[data-bs-theme="dark"] .lang-card.active-lang {
+    border-color: #0ea5e9 !important;
+    background: #0c2340;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+}
+
+.lang-flag {
+    line-height: 1;
+    display: inline-block;
+}
+
+.lang-native-name {
+    color: #1e293b;
+}
+
+[data-bs-theme="dark"] .lang-native-name {
+    color: #f8fafc;
+}
+
+/* --- Ẩn thanh công cụ banner mặc định của Google Translate (cũ & mới) --- */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+iframe.skiptranslate,
+body > .skiptranslate,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-ORHb,
+.VIpgJd-ZVi9od-SmfZ-OEVmcd,
+.VIpgJd-ZVi9od-xl07Ob-OEVmcd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-aZ2wEe-OiiCO,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.VIpgJd-suEOdc {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+html, body {
+    top: 0px !important;
+    position: static !important;
+    margin-top: 0px !important;
+}
+
+.goog-text-highlight,
+font[style*="background-color"] {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
