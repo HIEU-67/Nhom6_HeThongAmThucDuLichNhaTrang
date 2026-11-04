@@ -23,12 +23,15 @@ class DiaDiem
         if (empty($tuKhoa)) return "";
 
         $searchPattern = '%' . $tuKhoa . '%';
-        $startPattern = $tuKhoa . '%';
         $params['tu_khoa_name'] = $searchPattern;
         $params['tu_khoa_addr'] = $searchPattern;
         $params['tu_khoa_cat']  = $searchPattern;
-        $params['tu_khoa_order_start'] = $startPattern;
-        $params['tu_khoa_order_like']  = $searchPattern;
+
+        $idCondition = "";
+        if (preg_match('/^#?(\d+)$/', $tuKhoa, $m)) {
+            $params['tu_khoa_id'] = (int)$m[1];
+            $idCondition = " OR d.id = :tu_khoa_id";
+        }
 
         // Chuẩn bị từ khóa cho Full-Text Search (loại bỏ ký tự đặc biệt)
         $cleanKw = preg_replace('/[+\-><()~*"@]+/', ' ', $tuKhoa);
@@ -48,6 +51,7 @@ class DiaDiem
                     OR d.ten_dia_diem LIKE :tu_khoa_name
                     OR d.dia_chi LIKE :tu_khoa_addr
                     OR dm.ten_danh_muc LIKE :tu_khoa_cat
+                    {$idCondition}
                 )";
             }
         }
@@ -56,6 +60,7 @@ class DiaDiem
             d.ten_dia_diem LIKE :tu_khoa_name
             OR d.dia_chi LIKE :tu_khoa_addr
             OR dm.ten_danh_muc LIKE :tu_khoa_cat
+            {$idCondition}
         )";
     }
 
@@ -76,6 +81,8 @@ class DiaDiem
         $params['now_t2'] = $currentTime;
         $params['now_t3'] = $currentTime;
         $params['now_t4'] = $currentTime;
+        $params['tu_khoa_order_start'] = $tuKhoa . '%';
+        $params['tu_khoa_order_like']  = '%' . $tuKhoa . '%';
 
         $sql = "
             SELECT d.id, d.ten_dia_diem, d.duong_dan, d.dia_chi, d.anh_dai_dien,
@@ -134,6 +141,8 @@ class DiaDiem
 
         if (!empty($filters['tu_khoa'])) {
             $sql .= $this->buildSearchClause($filters['tu_khoa'], $params);
+            $params['tu_khoa_order_start'] = $filters['tu_khoa'] . '%';
+            $params['tu_khoa_order_like']  = '%' . $filters['tu_khoa'] . '%';
         }
 
         if (isset($filters['co_ban_ve']) && $filters['co_ban_ve'] !== '') {
@@ -215,6 +224,8 @@ class DiaDiem
 
         if (!empty($filters['tu_khoa'])) {
             $sql .= $this->buildSearchClause($filters['tu_khoa'], $params);
+            $params['tu_khoa_order_start'] = $filters['tu_khoa'] . '%';
+            $params['tu_khoa_order_like']  = '%' . $filters['tu_khoa'] . '%';
         }
 
         if (isset($filters['co_ban_ve']) && $filters['co_ban_ve'] !== '') {
@@ -373,7 +384,14 @@ class DiaDiem
             $params['co_ban_ve'] = (int)$filters['co_ban_ve'];
         }
 
-        $sql .= " ORDER BY d.id DESC";
+        // ORDER BY phải luôn đứng sau tất cả các điều kiện WHERE
+        if (!empty($filters['tu_khoa'])) {
+            $sql .= " ORDER BY (CASE WHEN d.ten_dia_diem LIKE :tu_khoa_order_start THEN 1 WHEN d.ten_dia_diem LIKE :tu_khoa_order_like THEN 2 ELSE 3 END), d.id DESC";
+            $params['tu_khoa_order_start'] = $filters['tu_khoa'] . '%';
+            $params['tu_khoa_order_like']  = '%' . $filters['tu_khoa'] . '%';
+        } else {
+            $sql .= " ORDER BY d.id DESC";
+        }
 
         if ($page !== null && $perPage !== null && $perPage > 0) {
             $page = max(1, $page);

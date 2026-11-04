@@ -127,7 +127,8 @@ class FormatHelper
         int $perPage,
         int $currentPage,
         string $baseUrl = '',
-        array $queryParams = []
+        array $queryParams = [],
+        string $pageParam = 'page'
     ): string {
         if ($total <= 0) {
             return '';
@@ -149,9 +150,9 @@ class FormatHelper
         $to = min($total, $currentPage * $perPage);
 
         // Chuẩn bị URL generator
-        $buildUrl = function (int $page) use ($baseUrl, $queryParams): string {
+        $buildUrl = function (int $page) use ($baseUrl, $queryParams, $pageParam): string {
             $params = $queryParams;
-            $params['page'] = $page;
+            $params[$pageParam] = $page;
             // Loại bỏ các param rỗng
             $filteredParams = array_filter($params, fn($val) => ($val !== '' && $val !== null));
             $queryString = http_build_query($filteredParams);

@@ -11,8 +11,6 @@
  * @var int $totalCategories
  */
 require_once dirname(__DIR__, 2) . '/layouts/admin_layout.php';
-
-$totalPages = ceil($totalCategories / $perPage);
 ?>
 
 <!-- Tiêu Đề & Thao Tác Thêm Mới -->
@@ -189,31 +187,10 @@ $totalPages = ceil($totalCategories / $perPage);
         </table>
     </div>
 
-    <!-- Phân Trang -->
-    <?php if ($totalPages > 1): ?>
-        <div class="card-footer bg-white py-3 border-0">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <span class="text-muted small">
-                    Hiển thị <strong><?= count($categories) ?></strong> / <strong><?= $totalCategories ?></strong> danh mục
-                </span>
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
-                            <a class="page-link" href="<?= url('admin/categories?' . http_build_query(array_merge($_GET, ['page' => $page - 1]))) ?>">Trước</a>
-                        </li>
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?= ($page == $i) ? 'active' : '' ?>">
-                                <a class="page-link" href="<?= url('admin/categories?' . http_build_query(array_merge($_GET, ['page' => $i]))) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
-                            <a class="page-link" href="<?= url('admin/categories?' . http_build_query(array_merge($_GET, ['page' => $page + 1]))) ?>">Sau</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    <?php endif; ?>
+    <!-- Phân Trang Dữ Liệu -->
+    <div class="pb-3">
+        <?= phan_trang($totalCategories ?? count($categories), $perPage ?? 10, $page ?? 1, 'admin/categories', $_GET) ?>
+    </div>
 </div>
 
 <!-- Form Xóa Ẩn (CSRF Protected) -->
@@ -235,4 +212,3 @@ function confirmDeleteCategory(id, name, locationCount) {
     }
 }
 </script>
-

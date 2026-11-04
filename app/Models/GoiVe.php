@@ -48,6 +48,59 @@ class GoiVe
     }
 
     /**
+     * Đếm tổng số gói vé theo từ khóa (phục vụ phân trang)
+     */
+    public function demTatCa(?string $tuKhoa = null): int
+    {
+        $sql = "
+            SELECT COUNT(gv.id)
+            FROM goi_ve gv
+            JOIN dia_diem dd ON gv.dia_diem_id = dd.id
+            WHERE 1=1
+        ";
+        $params = [];
+        if (!empty($tuKhoa)) {
+            $sql .= " AND (gv.ten_goi_ve LIKE :tk_gv OR dd.ten_dia_diem LIKE :tk_dd)";
+            $pattern = '%' . trim($tuKhoa) . '%';
+            $params['tk_gv'] = $pattern;
+            $params['tk_dd'] = $pattern;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Lấy danh sách gói vé có phân trang & tìm kiếm cho trang quản trị
+     */
+    public function layPhanTrang(int $page = 1, int $perPage = 10, ?string $tuKhoa = null): array
+    {
+        $sql = "
+            SELECT gv.*, dd.ten_dia_diem, dd.duong_dan as dia_diem_slug
+            FROM goi_ve gv
+            JOIN dia_diem dd ON gv.dia_diem_id = dd.id
+            WHERE 1=1
+        ";
+        $params = [];
+        if (!empty($tuKhoa)) {
+            $sql .= " AND (gv.ten_goi_ve LIKE :tk_gv OR dd.ten_dia_diem LIKE :tk_dd)";
+            $pattern = '%' . trim($tuKhoa) . '%';
+            $params['tk_gv'] = $pattern;
+            $params['tk_dd'] = $pattern;
+        }
+
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $sql .= " ORDER BY dd.ten_dia_diem ASC, gv.id DESC LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Thêm gói vé mới
      */
     public function them(array $data): int
@@ -107,4 +160,3 @@ class GoiVe
         }
     }
 }
-

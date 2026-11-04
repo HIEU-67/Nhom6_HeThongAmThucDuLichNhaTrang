@@ -149,9 +149,9 @@ if (!function_exists('hinh_anh')) {
 }
 
 if (!function_exists('phan_trang')) {
-    function phan_trang(int $total, int $perPage, int $currentPage, string $baseUrl = '', array $queryParams = []): string
+    function phan_trang(int $total, int $perPage, int $currentPage, string $baseUrl = '', array $queryParams = [], string $pageParam = 'page'): string
     {
-        return \App\Helpers\FormatHelper::phanTrang($total, $perPage, $currentPage, $baseUrl, $queryParams);
+        return \App\Helpers\FormatHelper::phanTrang($total, $perPage, $currentPage, $baseUrl, $queryParams, $pageParam);
     }
 }
 
