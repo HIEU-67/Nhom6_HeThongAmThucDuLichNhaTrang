@@ -173,7 +173,16 @@ class DiaDiem
             $params['now_t4'] = $currentTime;
         }
 
-        if (!empty($filters['tu_khoa'])) {
+        $sapXep = $filters['sap_xep'] ?? $filters['sort'] ?? '';
+        if ($sapXep === 'rating_desc' || $sapXep === 'rating') {
+            $sql .= " GROUP BY d.id ORDER BY diem_danh_gia DESC, tong_danh_gia DESC, d.luot_xem DESC, d.id DESC";
+        } elseif ($sapXep === 'rating_asc') {
+            $sql .= " GROUP BY d.id ORDER BY diem_danh_gia ASC, tong_danh_gia ASC, d.id ASC";
+        } elseif ($sapXep === 'price_asc') {
+            $sql .= " GROUP BY d.id ORDER BY d.gia_thap_nhat ASC, d.id DESC";
+        } elseif ($sapXep === 'price_desc') {
+            $sql .= " GROUP BY d.id ORDER BY d.gia_cao_nhat DESC, d.id DESC";
+        } elseif (!empty($filters['tu_khoa'])) {
             $sql .= " GROUP BY d.id ORDER BY (CASE WHEN d.ten_dia_diem LIKE :tu_khoa_order_start THEN 1 WHEN d.ten_dia_diem LIKE :tu_khoa_order_like THEN 2 ELSE 3 END), d.luot_xem DESC, d.id DESC";
         } else {
             $sql .= " GROUP BY d.id ORDER BY d.luot_xem DESC, d.id DESC";
@@ -256,7 +265,16 @@ class DiaDiem
             $params['now_t4'] = $currentTime;
         }
 
-        if (!empty($filters['tu_khoa'])) {
+        $sapXep = $filters['sap_xep'] ?? $filters['sort'] ?? '';
+        if ($sapXep === 'rating_desc' || $sapXep === 'rating') {
+            $sql .= " GROUP BY d.id ORDER BY diem_danh_gia DESC, tong_danh_gia DESC, d.luot_xem DESC, d.id DESC";
+        } elseif ($sapXep === 'rating_asc') {
+            $sql .= " GROUP BY d.id ORDER BY diem_danh_gia ASC, tong_danh_gia ASC, d.id ASC";
+        } elseif ($sapXep === 'price_asc') {
+            $sql .= " GROUP BY d.id ORDER BY d.gia_thap_nhat ASC, d.id DESC";
+        } elseif ($sapXep === 'price_desc') {
+            $sql .= " GROUP BY d.id ORDER BY d.gia_cao_nhat DESC, d.id DESC";
+        } elseif (!empty($filters['tu_khoa'])) {
             $sql .= " GROUP BY d.id ORDER BY (CASE WHEN d.ten_dia_diem LIKE :tu_khoa_order_start THEN 1 WHEN d.ten_dia_diem LIKE :tu_khoa_order_like THEN 2 ELSE 3 END), d.luot_xem DESC, d.id DESC";
         } else {
             $sql .= " GROUP BY d.id ORDER BY d.luot_xem DESC, d.id DESC";

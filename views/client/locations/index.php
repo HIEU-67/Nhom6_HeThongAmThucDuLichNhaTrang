@@ -170,10 +170,11 @@ require_once dirname(__DIR__, 2) . '/layouts/navbar.php';
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-muted small d-none d-sm-inline">Sắp xếp:</span>
                     <select id="sort-selector" class="form-select form-select-sm rounded-pill" style="width: auto;">
-                        <option value="popular">Lượt xem & Phổ biến</option>
-                        <option value="rating">Đánh giá sao cao nhất</option>
-                        <option value="price_asc">Giá từ thấp đến cao</option>
-                        <option value="price_desc">Giá từ cao đến thấp</option>
+                        <option value="popular" <?= ($filters['sap_xep'] ?? '') === 'popular' ? 'selected' : '' ?>>Lượt xem & Phổ biến</option>
+                        <option value="rating_desc" <?= in_array($filters['sap_xep'] ?? '', ['rating_desc', 'rating']) ? 'selected' : '' ?>>Đánh giá: Cao đến thấp</option>
+                        <option value="rating_asc" <?= ($filters['sap_xep'] ?? '') === 'rating_asc' ? 'selected' : '' ?>>Đánh giá: Thấp đến cao</option>
+                        <option value="price_asc" <?= ($filters['sap_xep'] ?? '') === 'price_asc' ? 'selected' : '' ?>>Giá: Thấp đến cao</option>
+                        <option value="price_desc" <?= ($filters['sap_xep'] ?? '') === 'price_desc' ? 'selected' : '' ?>>Giá: Cao đến thấp</option>
                     </select>
                 </div>
             </div>
