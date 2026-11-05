@@ -221,7 +221,8 @@ h1, h2, h3, h4, h5, h6,
 }
 
 /* Custom Leaflet Markers */
-.custom-leaflet-marker-wrapper {
+.custom-leaflet-marker-wrapper,
+.custom-trip-marker-wrapper {
     background: transparent !important;
     border: none !important;
 }

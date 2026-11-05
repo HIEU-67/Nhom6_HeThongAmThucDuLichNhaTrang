@@ -38,6 +38,7 @@ class LocationController
             'co_ban_ve'   => $_GET['co_ban_ve'] ?? '',
             'muc_gia'     => $_GET['muc_gia'] ?? '',
             'dang_mo_cua' => $_GET['dang_mo_cua'] ?? '',
+            'sap_xep'     => $_GET['sap_xep'] ?? $_GET['sort'] ?? '',
         ];
 
         $diaDiemList = $this->diaDiemModel->danhSach($filters);
@@ -127,6 +128,7 @@ class LocationController
             'co_ban_ve'   => $_GET['co_ban_ve'] ?? '',
             'muc_gia'     => $_GET['muc_gia'] ?? '',
             'dang_mo_cua' => $_GET['dang_mo_cua'] ?? '',
+            'sap_xep'     => $_GET['sap_xep'] ?? $_GET['sort'] ?? '',
         ];
 
         $markers = $this->diaDiemModel->layToaDoMap($filters);

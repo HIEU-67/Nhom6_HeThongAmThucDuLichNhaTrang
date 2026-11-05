@@ -198,6 +198,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (urlParams.get('muc_gia')) filters.muc_gia = urlParams.get('muc_gia');
         if (urlParams.get('co_ban_ve')) filters.co_ban_ve = urlParams.get('co_ban_ve');
         if (urlParams.get('dang_mo_cua')) filters.dang_mo_cua = urlParams.get('dang_mo_cua');
+        if (urlParams.get('sap_xep')) filters.sap_xep = urlParams.get('sap_xep');
+        if (urlParams.get('sort')) filters.sap_xep = urlParams.get('sort');
         return filters;
     }
 
@@ -223,6 +225,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (form.elements['dang_mo_cua']) {
             form.elements['dang_mo_cua'].checked = (filters.dang_mo_cua === '1');
+        }
+        if (filters.sap_xep) {
+            const sortSelect = document.getElementById('sort-selector');
+            if (sortSelect) sortSelect.value = filters.sap_xep;
         }
 
         locDanhMucTheoLoai();
@@ -289,7 +295,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (res.status === 'success' && Array.isArray(res.data)) {
                     allLocations = res.data;
                     renderMarkers(allLocations);
-                    capNhatDanhSachCards(allLocations);
+
+                    // Giữ nguyên sắp xếp đang chọn trên giao diện
+                    const sortSelect = document.getElementById('sort-selector');
+                    let listToDisplay = allLocations;
+                    if (sortSelect && sortSelect.value && sortSelect.value !== 'popular' && typeof apDungSapXep === 'function') {
+                        listToDisplay = apDungSapXep(allLocations, sortSelect.value);
+                    }
+                    capNhatDanhSachCards(listToDisplay);
 
                     if (allLocations.length > 0) {
                         fitMapToBounds(allLocations);
@@ -890,27 +903,65 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Helper sắp xếp danh sách địa điểm theo tiêu chí
+    function apDungSapXep(locations, val) {
+        if (!locations || !locations.length) return [];
+        let sorted = [...locations];
+
+        if (val === 'rating_desc' || val === 'rating') {
+            // Đánh giá: Cao đến thấp
+            sorted.sort((a, b) => {
+                const diff = parseFloat(b.diem_danh_gia || 0) - parseFloat(a.diem_danh_gia || 0);
+                if (Math.abs(diff) > 0.001) return diff;
+                // Nếu điểm đánh giá bằng nhau, ưu tiên nơi có nhiều lượt đánh giá hơn
+                const countDiff = parseInt(b.tong_danh_gia || 0) - parseInt(a.tong_danh_gia || 0);
+                if (countDiff !== 0) return countDiff;
+                return parseInt(b.luot_xem || 0) - parseInt(a.luot_xem || 0);
+            });
+        } else if (val === 'rating_asc') {
+            // Đánh giá: Thấp đến cao
+            sorted.sort((a, b) => {
+                const diff = parseFloat(a.diem_danh_gia || 0) - parseFloat(b.diem_danh_gia || 0);
+                if (Math.abs(diff) > 0.001) return diff;
+                const countDiff = parseInt(a.tong_danh_gia || 0) - parseInt(b.tong_danh_gia || 0);
+                if (countDiff !== 0) return countDiff;
+                return parseInt(a.luot_xem || 0) - parseInt(b.luot_xem || 0);
+            });
+        } else if (val === 'price_asc') {
+            // Giá: Thấp đến cao
+            sorted.sort((a, b) => parseFloat(a.gia_thap_nhat || 0) - parseFloat(b.gia_thap_nhat || 0));
+        } else if (val === 'price_desc') {
+            // Giá: Cao đến thấp
+            sorted.sort((a, b) => parseFloat(b.gia_cao_nhat || 0) - parseFloat(a.gia_cao_nhat || 0));
+        } else {
+            // Mặc định: Phổ biến & Lượt xem cao nhất
+            sorted.sort((a, b) => parseInt(b.luot_xem || 0) - parseInt(a.luot_xem || 0));
+        }
+
+        return sorted;
+    }
+
     // 15. Gắn sự kiện sắp xếp Client-side
     function ganSuKienSapXep() {
         const sortSelect = document.getElementById('sort-selector');
         if (!sortSelect) return;
 
         sortSelect.addEventListener('change', function () {
-            const val = this.value;
             if (!allLocations || !allLocations.length) return;
 
-            let sorted = [...allLocations];
-            if (val === 'rating') {
-                sorted.sort((a, b) => parseFloat(b.diem_danh_gia || 0) - parseFloat(a.diem_danh_gia || 0));
-            } else if (val === 'price_asc') {
-                sorted.sort((a, b) => parseFloat(a.gia_thap_nhat || 0) - parseFloat(b.gia_thap_nhat || 0));
-            } else if (val === 'price_desc') {
-                sorted.sort((a, b) => parseFloat(b.gia_cao_nhat || 0) - parseFloat(a.gia_cao_nhat || 0));
-            } else {
-                sorted.sort((a, b) => parseInt(b.luot_xem || 0) - parseInt(a.luot_xem || 0));
-            }
-
+            const sorted = apDungSapXep(allLocations, this.value);
             capNhatDanhSachCards(sorted);
+
+            // Đồng bộ tham số sap_xep vào URL (không reload trang)
+            const url = new URL(window.location.href);
+            if (this.value && this.value !== 'popular') {
+                url.searchParams.set('sap_xep', this.value);
+            } else {
+                url.searchParams.delete('sap_xep');
+            }
+            if (window.history.replaceState) {
+                window.history.replaceState({}, '', url.toString());
+            }
         });
     }
 
@@ -1902,15 +1953,56 @@ window.drawMultiRouteOnMap = function() {
                 list.forEach((item, index) => {
                     const num = index + 1;
                     const numberIcon = L.divIcon({
-                        className: 'custom-trip-marker',
+                        className: 'custom-trip-marker-wrapper',
                         html: `
-                            <div style="background: #ea580c; color: #fff; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
-                                ${num}
+                            <div class="trip-route-waypoint" style="
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                pointer-events: auto;
+                                filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+                            ">
+                                <div style="
+                                    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+                                    color: #ffffff;
+                                    padding: 3px 9px;
+                                    border-radius: 999px;
+                                    border: 2px solid #ffffff;
+                                    font-weight: 700;
+                                    font-size: 11.5px;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 4px;
+                                    white-space: nowrap;
+                                    line-height: 1.2;
+                                ">
+                                    <span style="
+                                        background: #ffffff;
+                                        color: #c2410c;
+                                        width: 17px;
+                                        height: 17px;
+                                        border-radius: 50%;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-size: 11px;
+                                        font-weight: 900;
+                                    ">${num}</span>
+                                    <span>Chặng ${num}</span>
+                                </div>
+                                <div style="
+                                    width: 0;
+                                    height: 0;
+                                    border-left: 5px solid transparent;
+                                    border-right: 5px solid transparent;
+                                    border-top: 6px solid #c2410c;
+                                    margin-top: -1px;
+                                "></div>
                             </div>
                         `,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16],
-                        popupAnchor: [0, -16]
+                        iconSize: [80, 32],
+                        iconAnchor: [40, 68],
+                        popupAnchor: [0, -68]
                     });
 
                     function fmtMoney(num) {
@@ -1919,8 +2011,10 @@ window.drawMultiRouteOnMap = function() {
                         return num.toLocaleString('vi-VN') + ' đ';
                     }
 
-                    const m = L.marker([item.lat, item.lng], { icon: numberIcon })
-                        .bindPopup(`<strong>Chặng ${num}: ${item.title}</strong><br><small class="text-muted">Vé: ${fmtMoney(item.price)}</small>`);
+                    const m = L.marker([item.lat, item.lng], { 
+                        icon: numberIcon,
+                        zIndexOffset: 3000
+                    }).bindPopup(`<strong>Chặng ${num}: ${item.title}</strong><br><small class="text-muted">Vé: ${fmtMoney(item.price)}</small>`);
                     multiRouteLayerGroup.addLayer(m);
                 });
 
